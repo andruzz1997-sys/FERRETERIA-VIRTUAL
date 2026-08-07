@@ -1,0 +1,224 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Taladro Inalámbrico 20V",
+      "category": "Herramientas",
+      "price": 4500,
+      "description": "Taladro potente y versátil para trabajos profesionales",
+      "stock": 15,
+      "rating": 4.8,
+      "emoji": "🔩",
+      "tags": ["herramienta", "electrónica", "construcción"]
+    },
+    {
+      "id": 2,
+      "name": "Martillo de Goma 1.5 KG",
+      "category": "Herramientas",
+      "price": 450,
+      "description": "Martillo resistente para trabajos de construcción",
+      "stock": 45,
+      "rating": 4.5,
+      "emoji": "🔨",
+      "tags": ["herramienta", "martillo", "construcción"]
+    },
+    {
+      "id": 3,
+      "name": "Cemento Portland 50KG",
+      "category": "Materiales",
+      "price": 3200,
+      "description": "Cemento de alta calidad para construcción",
+      "stock": 120,
+      "rating": 4.9,
+      "emoji": "📦",
+      "tags": ["cemento", "material", "construcción"]
+    },
+    {
+      "id": 4,
+      "name": "Arena Gruesa 50KG",
+      "category": "Materiales",
+      "price": 1500,
+      "description": "Arena gruesa para mezclas de construcción",
+      "stock": 200,
+      "rating": 4.6,
+      "emoji": "⚒️",
+      "tags": ["arena", "material", "construcción"]
+    },
+    {
+      "id": 5,
+      "name": "Tubería PVC 3/4 pulg",
+      "category": "Tuberías",
+      "price": 890,
+      "description": "Tubería PVC para sistemas de agua",
+      "stock": 85,
+      "rating": 4.7,
+      "emoji": "🔌",
+      "tags": ["tubería", "plomería", "agua"]
+    },
+    {
+      "id": 6,
+      "name": "Codos de Cobre 1 pulg",
+      "category": "Tuberías",
+      "price": 1200,
+      "description": "Codos de cobre para conexiones profesionales",
+      "stock": 50,
+      "rating": 4.8,
+      "emoji": "🔗",
+      "tags": ["codo", "cobre", "plomería"]
+    },
+    {
+      "id": 7,
+      "name": "Cable Eléctrico #12 100m",
+      "category": "Electricidad",
+      "price": 8900,
+      "description": "Cable eléctrico de cobre para instalaciones",
+      "stock": 30,
+      "rating": 4.9,
+      "emoji": "⚡",
+      "tags": ["cable", "eléctrico", "cobre"]
+    },
+    {
+      "id": 8,
+      "name": "Interruptor de 3 vías",
+      "category": "Electricidad",
+      "price": 350,
+      "description": "Interruptor eléctrico de alta calidad",
+      "stock": 150,
+      "rating": 4.6,
+      "emoji": "💡",
+      "tags": ["interruptor", "eléctrico", "instalación"]
+    },
+    {
+      "id": 9,
+      "name": "Pintura Latex Interior 1L",
+      "category": "Pintura",
+      "price": 2800,
+      "description": "Pintura latex de calidad para interiores",
+      "stock": 75,
+      "rating": 4.7,
+      "emoji": "🎨",
+      "tags": ["pintura", "interior", "latex"]
+    },
+    {
+      "id": 10,
+      "name": "Rodillo de Pintura 5 pulg",
+      "category": "Pintura",
+      "price": 450,
+      "description": "Rodillo profesional para aplicar pintura",
+      "stock": 100,
+      "rating": 4.5,
+      "emoji": "🖌️",
+      "tags": ["rodillo", "pintura", "herramienta"]
+    },
+    {
+      "id": 11,
+      "name": "Casco de Seguridad Amarillo",
+      "category": "Seguridad",
+      "price": 620,
+      "description": "Casco de seguridad para trabajos en altura",
+      "stock": 200,
+      "rating": 4.8,
+      "emoji": "🛡️",
+      "tags": ["casco", "seguridad", "protección"]
+    },
+    {
+      "id": 12,
+      "name": "Guantes de Trabajo Cuero",
+      "category": "Seguridad",
+      "price": 280,
+      "description": "Guantes protectores de cuero resistente",
+      "stock": 250,
+      "rating": 4.6,
+      "emoji": "🧤",
+      "tags": ["guantes", "seguridad", "protección"]
+    },
+    {
+      "id": 13,
+      "name": "Escalera de Aluminio 6 peldaños",
+      "category": "Herramientas",
+      "price": 5200,
+      "description": "Escalera ligera y resistente para trabajos",
+      "stock": 20,
+      "rating": 4.9,
+      "emoji": "🪜",
+      "tags": ["escalera", "aluminio", "herramienta"]
+    },
+    {
+      "id": 14,
+      "name": "Destornillador Set 12 piezas",
+      "category": "Herramientas",
+      "price": 890,
+      "description": "Set completo de destornilladores profesionales",
+      "stock": 60,
+      "rating": 4.7,
+      "emoji": "🔧",
+      "tags": ["destornillador", "set", "herramienta"]
+    },
+    {
+      "id": 15,
+      "name": "Llave Inglesa Ajustable",
+      "category": "Herramientas",
+      "price": 560,
+      "description": "Llave versátil para diversos tipos de tuercas",
+      "stock": 80,
+      "rating": 4.6,
+      "emoji": "⚙️",
+      "tags": ["llave", "ajustable", "herramienta"]
+    },
+    {
+      "id": 16,
+      "name": "Ladrillo Rojo 6 huecos",
+      "category": "Materiales",
+      "price": 180,
+      "description": "Ladrillo resistente para construcción",
+      "stock": 500,
+      "rating": 4.8,
+      "emoji": "🧱",
+      "tags": ["ladrillo", "material", "construcción"]
+    },
+    {
+      "id": 17,
+      "name": "Malla de Refuerzo 10x10",
+      "category": "Materiales",
+      "price": 4500,
+      "description": "Malla de acero para refuerzo de concreto",
+      "stock": 40,
+      "rating": 4.7,
+      "emoji": "⬜",
+      "tags": ["malla", "refuerzo", "acero"]
+    },
+    {
+      "id": 18,
+      "name": "Tubo Galvanizado 2 pulg",
+      "category": "Tuberías",
+      "price": 2800,
+      "description": "Tubo galvanizado resistente a la corrosión",
+      "stock": 35,
+      "rating": 4.9,
+      "emoji": "🔫",
+      "tags": ["tubo", "galvanizado", "tuberías"]
+    },
+    {
+      "id": 19,
+      "name": "Panel Solar 100W",
+      "category": "Electricidad",
+      "price": 24500,
+      "description": "Panel solar de alta eficiencia energética",
+      "stock": 15,
+      "rating": 4.8,
+      "emoji": "☀️",
+      "tags": ["panel", "solar", "energía"]
+    },
+    {
+      "id": 20,
+      "name": "Bombilla LED 30W",
+      "category": "Electricidad",
+      "price": 450,
+      "description": "Bombilla LED ahorro energético",
+      "stock": 180,
+      "rating": 4.7,
+      "emoji": "💡",
+      "tags": ["bombilla", "led", "ahorro"]
+    }
+  ]
+}

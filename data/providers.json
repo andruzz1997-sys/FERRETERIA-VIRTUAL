@@ -1,0 +1,144 @@
+{
+  "providers": [
+    {
+      "id": 1,
+      "name": "ConstruMateriales Pro",
+      "category": "Materiales de Construcción",
+      "description": "Proveedor líder en materiales de construcción con más de 20 años de experiencia",
+      "emoji": "🏗️",
+      "rating": 4.9,
+      "products": ["Cemento Portland", "Arena Gruesa", "Ladrillo Rojo"],
+      "contact": {
+        "email": "info@construmaterialespro.com",
+        "phone": "+1 (555) 123-0001",
+        "website": "www.construmaterialespro.com"
+      }
+    },
+    {
+      "id": 2,
+      "name": "HerramientasElite",
+      "category": "Herramientas Profesionales",
+      "description": "Distribuidor oficial de herramientas de calidad premium para profesionales",
+      "emoji": "🔧",
+      "rating": 4.8,
+      "products": ["Taladro Inalámbrico", "Martillo de Goma", "Escalera Aluminio"],
+      "contact": {
+        "email": "ventas@herramientaselite.com",
+        "phone": "+1 (555) 234-0002",
+        "website": "www.herramientaselite.com"
+      }
+    },
+    {
+      "id": 3,
+      "name": "SistemásPVC Integral",
+      "category": "Tuberías y Conexiones",
+      "description": "Especialista en sistemas de tuberías PVC y conexiones para agua potable",
+      "emoji": "🔌",
+      "rating": 4.7,
+      "products": ["Tubería PVC", "Codos de Cobre", "Tubo Galvanizado"],
+      "contact": {
+        "email": "contacto@sistemaspvcintegral.com",
+        "phone": "+1 (555) 345-0003",
+        "website": "www.sistemaspvcintegral.com"
+      }
+    },
+    {
+      "id": 4,
+      "name": "ElectricidadSegura",
+      "category": "Productos Eléctricos",
+      "description": "Distribuidora de materiales eléctricos certificados y seguros",
+      "emoji": "⚡",
+      "rating": 4.9,
+      "products": ["Cable Eléctrico", "Interruptor", "Bombilla LED"],
+      "contact": {
+        "email": "support@electricidadsegura.com",
+        "phone": "+1 (555) 456-0004",
+        "website": "www.electricidadsegura.com"
+      }
+    },
+    {
+      "id": 5,
+      "name": "ColorTotal Pinturas",
+      "category": "Pinturas y Acabados",
+      "description": "Fabricante de pinturas ecológicas y acabados de última generación",
+      "emoji": "🎨",
+      "rating": 4.8,
+      "products": ["Pintura Latex", "Rodillo de Pintura", "Barniz Protector"],
+      "contact": {
+        "email": "info@colortotalpinturas.com",
+        "phone": "+1 (555) 567-0005",
+        "website": "www.colortotalpinturas.com"
+      }
+    },
+    {
+      "id": 6,
+      "name": "ProtectorSeguridad Plus",
+      "category": "Equipo de Protección Personal",
+      "description": "Líder en equipos de protección personal con certificaciones internacionales",
+      "emoji": "🛡️",
+      "rating": 4.7,
+      "products": ["Casco de Seguridad", "Guantes de Trabajo", "Chaleco Reflectante"],
+      "contact": {
+        "email": "ventas@protectorseguridadplus.com",
+        "phone": "+1 (555) 678-0006",
+        "website": "www.protectorseguridadplus.com"
+      }
+    },
+    {
+      "id": 7,
+      "name": "AceroFortUnido",
+      "category": "Productos de Acero",
+      "description": "Proveedor de acero estructural y refuerzos para construcción",
+      "emoji": "⬛",
+      "rating": 4.8,
+      "products": ["Malla de Refuerzo", "Tubería de Acero", "Barras Corrugadas"],
+      "contact": {
+        "email": "info@acerofortunido.com",
+        "phone": "+1 (555) 789-0007",
+        "website": "www.acerofortunido.com"
+      }
+    },
+    {
+      "id": 8,
+      "name": "EnergíaRenovable Tech",
+      "category": "Energías Renovables",
+      "description": "Especialista en sistemas solares y energías limpias para el hogar",
+      "emoji": "☀️",
+      "rating": 4.9,
+      "products": ["Panel Solar", "Inversor Solar", "Batería Almacenamiento"],
+      "contact": {
+        "email": "consultas@energiarenovabletech.com",
+        "phone": "+1 (555) 890-0008",
+        "website": "www.energiarenovabletech.com"
+      }
+    },
+    {
+      "id": 9,
+      "name": "MezcladosIndustriales",
+      "category": "Concreto Premezclado",
+      "description": "Distribuidora de concreto premezclado listo para usar",
+      "emoji": "🚚",
+      "rating": 4.7,
+      "products": ["Concreto Premezclado", "Mortero", "Adhesivo Construcción"],
+      "contact": {
+        "email": "pedidos@mezcladosindustriales.com",
+        "phone": "+1 (555) 901-0009",
+        "website": "www.mezcladosindustriales.com"
+      }
+    },
+    {
+      "id": 10,
+      "name": "TecnoInstalaciones",
+      "category": "Servicios Especializados",
+      "description": "Proveedor de servicios de instalación y consultoría técnica",
+      "emoji": "👷",
+      "rating": 4.8,
+      "products": ["Instalación Eléctrica", "Instalación Plomería", "Consultoría Técnica"],
+      "contact": {
+        "email": "servicios@tecnoinstalaciones.com",
+        "phone": "+1 (555) 012-0010",
+        "website": "www.tecnoinstalaciones.com"
+      }
+    }
+  ]
+}

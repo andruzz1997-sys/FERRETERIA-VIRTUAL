@@ -1,0 +1,470 @@
+<!-- 
+    FERREWEB - EJEMPLOS DE INTEGRACIONES AVANZADAS
+    Este archivo muestra cómo integrar servicios externos con la plataforma
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FerrreWeb - Integraciones Avanzadas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .integration {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .integration h2 {
+            color: #228B22;
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 10px;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔨 FerrreWeb - Guía de Integraciones Avanzadas</h1>
+
+    <!-- STRIPE -->
+    <div class="integration">
+        <h2>💳 Integración con Stripe</h2>
+        <p>Para aceptar pagos de tarjeta de crédito de manera segura:</p>
+        <pre><code>
+// API Key de Stripe
+const STRIPE_PUBLIC_KEY = 'pk_test_tu_clave_publica';
+
+// 1. Cargar librería de Stripe
+const script = document.createElement('script');
+script.src = 'https://js.stripe.com/v3/';
+script.async = true;
+document.head.appendChild(script);
+
+// 2. Inicializar Stripe
+const stripe = Stripe(STRIPE_PUBLIC_KEY);
+const elements = stripe.elements();
+const cardElement = elements.create('card');
+cardElement.mount('#card-element');
+
+// 3. Procesar pago
+document.getElementById('pay-btn').addEventListener('click', async () => {
+    const {token} = await stripe.createToken(cardElement);
+    
+    if (token) {
+        fetch('/api/payments', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                stripeToken: token.id,
+                amount: getCartTotal() * 100,
+                currency: 'usd'
+            })
+        })
+        .then(res => res.json())
+        .then(data => console.log('Pago procesado:', data));
+    }
+});
+        </code></pre>
+    </div>
+
+    <!-- PAYPAL -->
+    <div class="integration">
+        <h2>🏦 Integración con PayPal</h2>
+        <p>Aceptar pagos con PayPal:</p>
+        <pre><code>
+// 1. Agregar botón de PayPal
+&lt;div id="paypal-button-container"&gt;&lt;/div&gt;
+
+// 2. Script de PayPal
+&lt;script src="https://www.paypal.com/sdk/js?client-id=TU_CLIENT_ID"&gt;&lt;/script&gt;
+
+// 3. Configurar botón
+paypal.Buttons({
+    createOrder(data, actions) {
+        return actions.order.create({
+            purchase_units: [{
+                amount: {
+                    value: getCartTotal().toString()
+                }
+            }]
+        });
+    },
+    onApprove(data, actions) {
+        return actions.order.capture().then(() => {
+            showNotification('✅ Pago con PayPal completado');
+            clearCart();
+        });
+    }
+}).render('#paypal-button-container');
+        </code></pre>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <div class="integration">
+        <h2>📊 Google Analytics</h2>
+        <p>Rastrear comportamiento de usuarios:</p>
+        <pre><code>
+// Script de Google Analytics
+&lt;script async src="https://www.googletagmanager.com/gtag/js?id=GA_ID"&gt;&lt;/script&gt;
+&lt;script&gt;
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'GA_ID');
+&lt;/script&gt;
+
+// Eventos personalizados
+function trackProductView(productId, productName) {
+    gtag('event', 'view_item', {
+        items: [{
+            item_id: productId,
+            item_name: productName,
+            price: getProductPrice(productId)
+        }]
+    });
+}
+
+function trackAddToCart(item) {
+    gtag('event', 'add_to_cart', {
+        items: [{
+            item_id: item.id,
+            item_name: item.name,
+            price: item.price,
+            quantity: item.quantity
+        }]
+    });
+}
+
+function trackPurchase(orderId, items, total) {
+    gtag('event', 'purchase', {
+        transaction_id: orderId,
+        value: total,
+        items: items
+    });
+}
+        </code></pre>
+    </div>
+
+    <!-- TWILIO SMS -->
+    <div class="integration">
+        <h2>📱 Notificaciones por SMS (Twilio)</h2>
+        <p>Enviar SMS de confirmación:</p>
+        <pre><code>
+// Backend - server.js
+const twilio = require('twilio');
+
+const client = twilio(ACCOUNT_SID, AUTH_TOKEN);
+
+function sendOrderSMS(phoneNumber, orderId) {
+    return client.messages.create({
+        body: `Tu orden #${orderId} ha sido confirmada. Rastreo: ferreweb.com/track/${orderId}`,
+        from: '+1234567890',
+        to: phoneNumber
+    });
+}
+
+// Frontend
+function handlePaymentSuccess(result) {
+    fetch('/api/send-sms', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            phone: document.getElementById('phone').value,
+            orderId: result.orderId
+        })
+    });
+}
+        </code></pre>
+    </div>
+
+    <!-- SENDGRID EMAIL -->
+    <div class="integration">
+        <h2>📧 Emails Transaccionales (SendGrid)</h2>
+        <p>Enviar confirmaciones por email:</p>
+        <pre><code>
+// Backend
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(SENDGRID_API_KEY);
+
+async function sendOrderConfirmation(email, orderId, items) {
+    const htmlContent = `
+        &lt;h2&gt;Confirmación de Orden #${orderId}&lt;/h2&gt;
+        &lt;p&gt;Gracias por tu compra en FerrreWeb&lt;/p&gt;
+        &lt;h3&gt;Productos:&lt;/h3&gt;
+        &lt;ul&gt;
+            ${items.map(item => `&lt;li&gt;${item.name} x${item.quantity}&lt;/li&gt;`).join('')}
+        &lt;/ul&gt;
+        &lt;p&gt;&lt;a href="https://ferreweb.com/track/${orderId}"&gt;Rastrear Orden&lt;/a&gt;&lt;/p&gt;
+    `;
+
+    const msg = {
+        to: email,
+        from: 'noreply@ferreweb.com',
+        subject: `Confirmación de Orden - #${orderId}`,
+        html: htmlContent
+    };
+
+    return sgMail.send(msg);
+}
+        </code></pre>
+    </div>
+
+    <!-- MAPBOX -->
+    <div class="integration">
+        <h2>🗺️ Mapas y Ubicación (Mapbox)</h2>
+        <p>Mostrar ubicación de tienda y opciones de entrega:</p>
+        <pre><code>
+// HTML
+&lt;div id='map' style='height: 400px;'&gt;&lt;/div&gt;
+
+// JavaScript
+mapboxgl.accessToken = 'TU_MAPBOX_TOKEN';
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [-74.5, 40],
+    zoom: 9
+});
+
+// Agregar tienda
+new mapboxgl.Marker()
+    .setLngLat([-74.5, 40])
+    .setPopup(new mapboxgl.Popup().setHTML('&lt;h3&gt;FerrreWeb&lt;/h3&gt;&lt;p&gt;Calle Principal 123&lt;/p&gt;'))
+    .addTo(map);
+
+// Calcular zona de entrega
+function getDeliveryZone(latitude, longitude) {
+    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapboxgl.accessToken}`)
+        .then(response => response.json())
+        .then(data => console.log('Ubicación:', data.features[0].properties.name));
+}
+        </code></pre>
+    </div>
+
+    <!-- FIREBASE -->
+    <div class="integration">
+        <h2>🔥 Firebase (Realtime Database)</h2>
+        <p>Sincronización en tiempo real:</p>
+        <pre><code>
+// Inicializar Firebase
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, onValue } from "firebase/database";
+
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "ferreweb.firebaseapp.com",
+    databaseURL: "https://ferreweb.firebaseio.com",
+    projectId: "ferreweb"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// Guardar carrito en tiempo real
+function syncCartToFirebase(userId, cart) {
+    set(ref(database, 'users/' + userId + '/cart'), cart);
+}
+
+// Escuchar cambios
+onValue(ref(database, 'users/' + userId + '/cart'), (snapshot) => {
+    const cartData = snapshot.val();
+    cart = cartData || [];
+    updateCartUI();
+});
+
+// Guardar orden
+function saveOrderToFirebase(userId, order) {
+    set(ref(database, 'orders/' + order.orderId), order);
+}
+        </code></pre>
+    </div>
+
+    <!-- CLOUDINARY -->
+    <div class="integration">
+        <h2>🖼️ Gestión de Imágenes (Cloudinary)</h2>
+        <p>Subir y optimizar imágenes:</p>
+        <pre><code>
+// Script de Cloudinary
+&lt;script src="https://widget.cloudinary.com/v2.0/global/all.js"&gt;&lt;/script&gt;
+
+// Abrir widget para subir foto
+document.getElementById('upload-photo').addEventListener('click', () => {
+    cloudinary.openUploadWidget({
+        cloudName: "TU_CLOUD_NAME",
+        uploadPreset: "TU_UPLOAD_PRESET"
+    }, (error, result) => {
+        if (result && result.event === 'success') {
+            const imageUrl = result.info.secure_url;
+            displayProductImage(imageUrl);
+        }
+    });
+});
+
+// Optimizar imagen
+function getOptimizedImage(publicId) {
+    return `https://res.cloudinary.com/TU_CLOUD_NAME/image/upload/w_400,h_300,c_fill/${publicId}`;
+}
+        </code></pre>
+    </div>
+
+    <!-- JWT AUTHENTICATION -->
+    <div class="integration">
+        <h2>🔐 Autenticación JWT</h2>
+        <p>Usuarios con login:</p>
+        <pre><code>
+// Instalación
+npm install jsonwebtoken
+
+// Backend - Generar Token
+const jwt = require('jsonwebtoken');
+
+function generateToken(userId) {
+    return jwt.sign(
+        { userId, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+}
+
+// Frontend - Guardar token
+function login(email, password) {
+    fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email, password})
+    })
+    .then(res => res.json())
+    .then(data => {
+        localStorage.setItem('token', data.token);
+        redirectToDashboard();
+    });
+}
+
+// Frontend - Usar token en requests
+function authenticatedFetch(url, options = {}) {
+    const token = localStorage.getItem('token');
+    return fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
+        }
+    });
+}
+        </code></pre>
+    </div>
+
+    <!-- SOCKET.IO -->
+    <div class="integration">
+        <h2>🔄 Actualizaciones en Tiempo Real (Socket.IO)</h2>
+        <p>Chat y notificaciones en vivo:</p>
+        <pre><code>
+// Backend - server.js
+const io = require('socket.io')(3000, {
+    cors: { origin: "*" }
+});
+
+io.on('connection', (socket) => {
+    console.log('Usuario conectado:', socket.id);
+
+    // Notificar nuevos pedidos
+    socket.on('new-order', (order) => {
+        io.emit('order-received', order);
+    });
+
+    // Chat de soporte
+    socket.on('support-message', (message) => {
+        io.emit('new-support-message', message);
+    });
+});
+
+// Frontend
+const socket = io('http://localhost:3000');
+
+socket.on('order-received', (order) => {
+    showNotification(`Nuevo pedido: ${order.orderId}`);
+});
+
+socket.emit('support-message', {
+    user: 'Cliente',
+    message: 'Necesito ayuda',
+    timestamp: new Date()
+});
+        </code></pre>
+    </div>
+
+    <!-- ELASTICSEARCH -->
+    <div class="integration">
+        <h2>🔍 Búsqueda Avanzada (Elasticsearch)</h2>
+        <p>Motor de búsqueda potente:</p>
+        <pre><code>
+// Backend
+const elasticsearch = require('@elastic/elasticsearch');
+const client = new elasticsearch.Client({ node: 'http://localhost:9200' });
+
+// Indexar productos
+async function indexProducts(products) {
+    for (const product of products) {
+        await client.index({
+            index: 'products',
+            id: product.id.toString(),
+            body: product
+        });
+    }
+}
+
+// Buscar
+async function searchProducts(query) {
+    const result = await client.search({
+        index: 'products',
+        body: {
+            query: {
+                multi_match: {
+                    query: query,
+                    fields: ['name^2', 'description', 'category']
+                }
+            }
+        }
+    });
+    return result.hits.hits.map(hit => hit._source);
+}
+        </code></pre>
+    </div>
+
+    <h2>📚 Recursos Adicionales</h2>
+    <ul>
+        <li><a href="https://stripe.com/docs">Documentación Stripe</a></li>
+        <li><a href="https://developer.paypal.com">PayPal Developer</a></li>
+        <li><a href="https://developers.google.com/analytics">Google Analytics</a></li>
+        <li><a href="https://www.twilio.com/docs">Twilio Docs</a></li>
+        <li><a href="https://sendgrid.com/docs">SendGrid API</a></li>
+        <li><a href="https://docs.mapbox.com">Mapbox Documentation</a></li>
+        <li><a href="https://firebase.google.com/docs">Firebase Docs</a></li>
+        <li><a href="https://cloudinary.com/documentation">Cloudinary Docs</a></li>
+    </ul>
+
+    <p style="text-align: center; color: #666; margin-top: 40px;">
+        © 2026 FerrreWeb - Todas las integraciones son opcionales y pueden customizarse según necesidad
+    </p>
+</body>
+</html>

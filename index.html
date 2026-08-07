@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html>
+<html lang="es" class="performance-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FerreWeb: tienda virtual de ferreteria para compras online en COP.">
+    <title>FERREWEB | Ferreteria Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <div class="bg-decoration" aria-hidden="true"></div>
+
+    <header class="site-header glass-card">
+        <nav class="site-nav">
+            <a href="#inicio" class="brand" aria-label="Ir al inicio">
+                <span class="brand-dot"></span>
+                <span class="brand-text">FERREWEB</span>
+            </a>
+
+            <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navLinks" type="button">
+                <span></span>
+                <span></span>
+            </button>
+
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#inicio" class="nav-link">Inicio</a></li>
+                <li><a href="#catalogo" class="nav-link">Catalogo</a></li>
+                <li><a href="#ofertas" class="nav-link hidden" id="offersNav">Ofertas</a></li>
+                <li><a href="#pagos" class="nav-link">Pagos</a></li>
+                <li><a href="#contacto" class="nav-link">Contacto</a></li>
+            </ul>
+
+            <div class="header-actions">
+                <button class="btn btn-ghost" id="authBtn" type="button" data-auth-open="login">Iniciar sesion</button>
+                <button class="btn btn-ghost" id="authRegisterBtn" type="button" data-auth-open="register">Registrarse</button>
+                <button class="cart-btn" id="cartBtn" type="button" aria-label="Abrir carrito">
+                    Carrito
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="inicio" class="hero section">
+            <div class="container hero-layout">
+                <div class="hero-copy">
+                    <p class="eyebrow">Ferreteria online moderna</p>
+                    <h1>Todo para tu obra, hogar o negocio en un solo lugar.</h1>
+                    <p>
+                        En FERREWEB encuentras herramientas, materiales y accesorios con compra rapida,
+                        pagos seguros y despacho eficiente.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="#catalogo" class="btn btn-primary">Comprar ahora</a>
+                        <a href="#pagos" class="btn btn-ghost">Ver metodos de pago</a>
+                    </div>
+                </div>
+                <div class="hero-panels">
+                    <article class="hero-panel glass-card">
+                        <h3>+200 productos</h3>
+                        <p>Inventario pensado para venta virtual y compra recurrente.</p>
+                    </article>
+                    <article class="hero-panel glass-card">
+                        <h3>Pago en COP</h3>
+                        <p>Todos los precios y totales en pesos colombianos.</p>
+                    </article>
+                    <article class="hero-panel glass-card">
+                        <h3>Checkout simple</h3>
+                        <p>Carrito intuitivo con resumen de compra y metodos de pago.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="catalogo" class="section">
+            <div class="container">
+                <div class="section-head">
+                    <p class="eyebrow">Catalogo de productos</p>
+                    <h2>Busca, filtra y ordena para comprar en menos tiempo.</h2>
+                </div>
+
+                <div class="filters glass-card">
+                    <label class="field">
+                        <span>Buscar producto</span>
+                        <input id="searchInput" type="search" placeholder="Ej: taladro, cemento, broca...">
+                    </label>
+
+                    <label class="field">
+                        <span>Categoria</span>
+                        <select id="categoryFilter">
+                            <option value="">Todas las categorias</option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Ordenar por</span>
+                        <select id="sortFilter">
+                            <option value="relevance">Relevancia</option>
+                            <option value="price-asc">Precio: menor a mayor</option>
+                            <option value="price-desc">Precio: mayor a menor</option>
+                            <option value="category">Categoria</option>
+                        </select>
+                    </label>
+                </div>
+
+                <p class="results" id="resultsCount"></p>
+                <div class="products-grid" id="productsGrid"></div>
+            </div>
+        </section>
+
+        <section id="ofertas" class="section hidden" aria-hidden="true">
+            <div class="container">
+                <div class="section-head">
+                    <p class="eyebrow">Ofertas activas</p>
+                    <h2>Descuentos disponibles por tiempo limitado.</h2>
+                </div>
+                <div class="offers-grid" id="offersGrid"></div>
+            </div>
+        </section>
+
+        <section id="pagos" class="section">
+            <div class="container">
+                <div class="section-head">
+                    <p class="eyebrow">Pagos disponibles</p>
+                    <h2>Finaliza tus compras como prefieras.</h2>
+                </div>
+
+                <div class="payments-grid">
+                    <article class="payment-card glass-card">
+                        <h3>Tarjeta credito/debito</h3>
+                        <p>Visa, Mastercard, Amex y franquicias nacionales.</p>
+                    </article>
+                    <article class="payment-card glass-card">
+                        <h3>PSE</h3>
+                        <p>Debito directo desde cuentas bancarias en Colombia.</p>
+                    </article>
+                    <article class="payment-card glass-card">
+                        <h3>Transferencia</h3>
+                        <p>Bancolombia, Davivienda, Nequi, DaviPlata y mas.</p>
+                    </article>
+                    <article class="payment-card glass-card">
+                        <h3>Pago contra entrega</h3>
+                        <p>Efectivo o datfono al recibir el pedido.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="contacto" class="section">
+            <div class="container contact-layout">
+                <div>
+                    <p class="eyebrow">Contacto</p>
+                    <h2>Atencion para ventas y soporte de pedidos.</h2>
+                    <p class="contact-copy">
+                        Horario: lunes a sabado de 7:00 a.m. a 7:00 p.m.<br>
+                        Email: ventas@ferreweb.com<br>
+                        WhatsApp: +57 300 000 0000
+                    </p>
+                </div>
+                <article class="contact-card glass-card">
+                    <h3>Compra segura FERREWEB</h3>
+                    <ul>
+                        <li>SSL en proceso de pago</li>
+                        <li>Confirmacion inmediata por correo</li>
+                        <li>Soporte humano para cada orden</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>2026 FERREWEB. Tienda virtual de ferreteria.</p>
+    </footer>
+
+    <div class="overlay hidden" id="overlay"></div>
+
+    <aside class="cart-drawer hidden" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
+        <header class="drawer-header">
+            <h2 id="cartTitle">Tu carrito</h2>
+            <button class="icon-close" id="closeCartBtn" type="button" aria-label="Cerrar carrito">x</button>
+        </header>
+
+        <div class="drawer-content">
+            <div class="cart-items" id="cartItems"></div>
+
+            <div class="cart-summary glass-card">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <strong id="subtotalValue">$0</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Envio</span>
+                    <strong id="shippingValue">$0</strong>
+                </div>
+                <div class="summary-row total">
+                    <span>Total COP</span>
+                    <strong id="totalValue">$0</strong>
+                </div>
+
+                <fieldset class="payment-methods" id="paymentMethods">
+                    <legend>Metodo de pago</legend>
+                </fieldset>
+
+                <form id="checkoutForm" class="checkout-form">
+                    <input id="checkoutName" type="text" placeholder="Nombre completo" required>
+                    <input id="checkoutPhone" type="tel" placeholder="Telefono" required>
+                    <input id="checkoutAddress" type="text" placeholder="Direccion de entrega" required>
+                    <button class="btn btn-primary full" type="submit">Finalizar compra</button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <section class="auth-modal hidden" id="authModal" aria-labelledby="authTitle" aria-hidden="true">
+        <header class="drawer-header">
+            <h2 id="authTitle">Acceso FERREWEB</h2>
+            <button class="icon-close" id="closeAuthBtn" type="button" aria-label="Cerrar autenticacion">x</button>
+        </header>
+
+        <div class="auth-tabs" role="tablist">
+            <button type="button" class="auth-tab active" data-auth-tab="login">Iniciar sesion</button>
+            <button type="button" class="auth-tab" data-auth-tab="register">Registrarse</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+            <label for="loginEmail">Correo</label>
+            <input id="loginEmail" type="email" required>
+            <label for="loginPassword">Contrasena</label>
+            <input id="loginPassword" type="password" required>
+            <button class="btn btn-primary full" type="submit">Ingresar</button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden">
+            <label for="registerName">Nombre completo</label>
+            <input id="registerName" type="text" required>
+            <label for="registerEmail">Correo</label>
+            <input id="registerEmail" type="email" required>
+            <label for="registerPassword">Contrasena</label>
+            <input id="registerPassword" type="password" minlength="6" required>
+            <button class="btn btn-primary full" type="submit">Crear cuenta</button>
+        </form>
+
+        <p class="auth-message" id="authMessage" aria-live="polite"></p>
+    </section>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="firebase-config.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+:root {
+    --admin-gap: 1rem;
+}
+
+.admin-header {
+    border-radius: 22px;
+}
+
+.admin-grid {
+    display: grid;
+    gap: var(--admin-gap);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+}
+
+.admin-offers {
+    grid-column: 2;
+}
+
+.admin-card {
+    border-radius: var(--radius-lg);
+    padding: 1.2rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.admin-card h2 {
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.35rem;
+}
+
+.admin-auth {
+    margin-bottom: 1rem;
+}
+
+.admin-status {
+    margin: 0.4rem 0 1.1rem;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+.admin-auth-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.admin-auth-actions .btn {
+    padding: 0.5rem 1rem;
+}
+
+.admin-form {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.admin-form label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    padding: 0.62rem 0.7rem;
+    font-family: inherit;
+}
+
+.admin-form input:focus,
+.admin-form textarea:focus,
+.admin-form select:focus {
+    outline: 1px solid var(--yellow);
+    border-color: var(--yellow);
+}
+
+.admin-inline {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+}
+
+.admin-search {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.admin-search label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.admin-search input {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    padding: 0.62rem 0.7rem;
+    font-family: inherit;
+}
+
+.admin-search input:focus {
+    outline: 1px solid var(--yellow);
+    border-color: var(--yellow);
+}
+
+.admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.admin-scroll {
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+}
+
+.admin-list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.admin-item {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    padding: 0.65rem 0.75rem;
+    display: grid;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.admin-item-title {
+    font-weight: 600;
+}
+
+.admin-item-meta {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.admin-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.admin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.78rem;
+}
+
+.admin-chip button {
+    border: 0;
+    background: transparent;
+    color: #ffd9d9;
+    cursor: pointer;
+    font-size: 0.78rem;
+}
+
+.admin-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.86rem;
+    color: var(--text-main);
+}
+
+.image-preview {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.admin-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+body.admin-modal-open {
+    overflow: hidden;
+}
+
+.admin-modal {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1.2rem;
+    background: rgba(5, 9, 8, 0.7);
+    z-index: 240;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.admin-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.admin-modal-card {
+    width: min(560px, 95%);
+    border-radius: 20px;
+    padding: 1.2rem;
+    display: grid;
+    gap: 0.9rem;
+    transform: perspective(900px) translateY(24px) rotateX(-10deg) scale(0.96);
+    opacity: 0;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+.admin-modal.is-open .admin-modal-card {
+    transform: perspective(900px) translateY(0) rotateX(0) scale(1);
+    opacity: 1;
+}
+
+.admin-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+@media (max-width: 980px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-offers {
+        grid-column: auto;
+    }
+}

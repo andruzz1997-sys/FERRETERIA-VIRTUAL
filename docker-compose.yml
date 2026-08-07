@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Servicio principal de FerrreWeb
+  web:
+    build: .
+    container_name: ferreweb-app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - ferreweb-network
+    depends_on:
+      - db
+
+  # Base de datos (PostgreSQL) - Opcional
+  db:
+    image: postgres:15-alpine
+    container_name: ferreweb-db
+    environment:
+      POSTGRES_USER: ferreweb
+      POSTGRES_PASSWORD: ferreweb_password
+      POSTGRES_DB: ferreweb_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - ferreweb-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ferreweb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para caché - Opcional
+  redis:
+    image: redis:7-alpine
+    container_name: ferreweb-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - ferreweb-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx como proxy inverso - Opcional
+  nginx:
+    image: nginx:alpine
+    container_name: ferreweb-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+    networks:
+      - ferreweb-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  ferreweb-network:
+    driver: bridge
