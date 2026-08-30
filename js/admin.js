@@ -1,5 +1,4 @@
 import { auth, db, firebaseReady, storage } from "./firebase-init.js";
-import { initGlowingEffects } from "./glow.js";
 import {
     collection,
     deleteDoc,
@@ -197,8 +196,6 @@ let productSearchTerm = "";
 initAdmin();
 
 function initAdmin() {
-    initGlowingEffects(document);
-
     if (!firebaseReady) {
         setAdminStatus("Configura Firebase en firebase-config.js para continuar.");
         disableAdminUI();

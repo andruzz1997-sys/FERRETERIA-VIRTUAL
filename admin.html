@@ -1,28 +1,33 @@
 <!DOCTYPE html>
-<html lang="es" class="performance-mode">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Panel administrador de FerreWeb.">
-    <title>FERREWEB | Administrador</title>
+    <meta name="description" content="Panel administrador de FerreWeb: gestión de inventario, precios y categorías.">
+    <meta name="theme-color" content="#0D2818">
+    <title>FERREWEB | Panel Administrador</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+    <!-- Tipografías Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
-    <div class="bg-decoration" aria-hidden="true"></div>
-
-    <header class="site-header glass-card admin-header">
-        <nav class="site-nav">
+    <header class="site-header admin-header">
+        <nav class="site-nav" aria-label="Navegación del administrador">
             <a href="index.html" class="brand" aria-label="Volver a la tienda">
-                <span class="brand-dot"></span>
-                <span class="brand-text">FERREWEB</span>
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" focusable="false"><path d="M13.8 3.5h4.4v9h8.3v4.4h-8.3v11.6h-4.4V16.9H5.5v-4.4h8.3z"/></svg>
+                </span>
+                <span class="brand-text">FERRE<span>WEB</span></span>
             </a>
             <div class="header-actions">
-                <a class="btn btn-ghost" href="index.html">Volver a tienda</a>
+                <a class="btn btn-ghost" href="index.html">← Volver a la Tienda</a>
             </div>
         </nav>
     </header>
@@ -31,113 +36,88 @@
         <section class="section">
             <div class="container">
                 <div class="section-head">
-                    <p class="eyebrow">Panel administrador</p>
-                    <h1>Gestion de tienda y promociones</h1>
+                    <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Control de Inventario</p>
+                    <h1>Panel Administrador de Tienda</h1>
+                    <p class="section-intro">Gestiona productos, actualiza precios en COP, añade categorías y controla las opciones de pago.</p>
                 </div>
-                <p class="admin-status" id="adminStatus">Conectando al panel...</p>
+                <p class="admin-status" id="adminStatus" role="status" aria-live="polite">Conectando al panel de control...</p>
 
                 <div class="admin-grid" id="adminContent">
+                    <!-- GESTIÓN DE PRODUCTOS -->
                     <article class="admin-card glass-card">
-                        <h2>Productos</h2>
+                        <h2>📦 Gestión de Productos</h2>
                         <form id="productForm" class="admin-form">
                             <input id="productId" type="hidden">
 
-                            <label for="productName">Nombre</label>
-                            <input id="productName" type="text" placeholder="Ej: Taladro inalambrico" required>
+                            <label for="productName">Nombre del Producto</label>
+                            <input id="productName" type="text" placeholder="Ej.: Taladro inalámbrico 20V" required>
 
-                            <label for="productCategory">Categoria</label>
+                            <label for="productCategory">Categoría</label>
                             <input id="productCategory" type="text" list="categoryOptions" placeholder="Ej: Herramientas" required>
                             <datalist id="categoryOptions"></datalist>
 
-                            <label for="productPrice">Precio (COP)</label>
-                            <input id="productPrice" type="number" min="0" step="100" placeholder="Ej: 129900" required>
+                            <label for="productPrice">Precio en COP ($)</label>
+                            <input id="productPrice" type="number" min="0" step="100" placeholder="Ej: 429900" required>
 
-                            <label for="productDescription">Descripcion</label>
-                            <textarea id="productDescription" rows="3" placeholder="Descripcion corta"></textarea>
+                            <label for="productDescription">Descripción y Especificaciones</label>
+                            <textarea id="productDescription" rows="3" placeholder="Detalle técnico del producto..."></textarea>
 
-                            <label for="productImageUrl">Imagen (URL)</label>
-                            <input id="productImageUrl" type="url" placeholder="https://...">
+                            <label for="productImageUrl">URL de Imagen (Opcional)</label>
+                            <input id="productImageUrl" type="url" placeholder="https://ejemplo.com/foto.jpg">
 
-                            <label for="productImageFile">Imagen (archivo)</label>
+                            <label for="productImageFile">Subir Archivo de Imagen</label>
                             <input id="productImageFile" type="file" accept="image/*">
 
-                            <div class="image-preview" id="productImagePreview">Sin imagen cargada</div>
+                            <div class="image-preview" id="productImagePreview">Vista previa de imagen</div>
 
                             <div class="admin-actions">
-                                <button class="btn btn-primary" type="submit">Guardar producto</button>
-                                <button class="btn btn-ghost" id="productCancelBtn" type="button">Cancelar edicion</button>
+                                <button class="btn btn-primary" type="submit">Guardar Producto</button>
+                                <button class="btn btn-ghost" id="productCancelBtn" type="button">Cancelar Edición</button>
                             </div>
                         </form>
 
-                        <div class="admin-search">
-                            <label for="productSearch">Buscar producto</label>
-                            <input id="productSearch" type="search" placeholder="Nombre, categoria o descripcion">
+                        <div class="admin-search" style="margin-top: 14px;">
+                            <label for="productSearch">Buscar en el Inventario</label>
+                            <input id="productSearch" type="search" placeholder="Filtrar por nombre o categoría...">
                         </div>
 
                         <div class="admin-list admin-scroll" id="productsList"></div>
                     </article>
 
-                    <article class="admin-card glass-card">
-                        <h2>Categorias</h2>
-                        <form id="categoryForm" class="admin-form admin-inline">
-                            <input id="categoryName" type="text" placeholder="Nueva categoria" required>
-                            <button class="btn btn-primary" type="submit">Agregar</button>
-                        </form>
-                        <div class="admin-chip-list" id="categoriesList"></div>
-                    </article>
+                    <!-- CATEGORÍAS -->
+                    <div style="display: grid; gap: var(--admin-gap);">
+                        <article class="admin-card glass-card">
+                            <h2>🏷️ Categorías de Tienda</h2>
+                            <form id="categoryForm" class="admin-form admin-inline">
+                                <input id="categoryName" type="text" placeholder="Nueva categoría (Ej: Electricidad)" required>
+                                <button class="btn btn-primary" type="submit">Agregar</button>
+                            </form>
+                            <div class="admin-chip-list" id="categoriesList"></div>
+                        </article>
 
-                    <article class="admin-card glass-card admin-offers">
-                        <h2>Ofertas</h2>
-                        <form id="offerForm" class="admin-form">
-                            <label for="offerTitle">Titulo de la oferta</label>
-                            <input id="offerTitle" type="text" placeholder="Ej: Semana del constructor" required>
-
-                            <label for="offerDescription">Descripcion</label>
-                            <textarea id="offerDescription" rows="3" placeholder="Detalle de la promocion"></textarea>
-
-                            <label for="offerDiscount">Descuento (%)</label>
-                            <input id="offerDiscount" type="number" min="0" max="90" step="1" value="10">
-
-                            <label for="offerProduct">Producto relacionado (opcional)</label>
-                            <select id="offerProduct"></select>
-
-                            <label for="offerImageUrl">Imagen (URL)</label>
-                            <input id="offerImageUrl" type="url" placeholder="https://...">
-
-                            <label for="offerImageFile">Imagen (archivo)</label>
-                            <input id="offerImageFile" type="file" accept="image/*">
-
-                            <div class="image-preview" id="offerImagePreview">Sin imagen cargada</div>
-
-                            <label class="admin-checkbox">
-                                <input id="offerActive" type="checkbox" checked>
-                                Oferta activa
-                            </label>
-
-                            <button class="btn btn-primary" type="submit">Agregar oferta</button>
-                        </form>
-
-                        <div class="admin-list" id="offersList"></div>
-                    </article>
-
-                    <article class="admin-card glass-card">
-                        <h2>Metodos de pago</h2>
-                        <form id="paymentForm" class="admin-form admin-inline">
-                            <input id="paymentName" type="text" placeholder="Nuevo metodo" required>
-                            <button class="btn btn-primary" type="submit">Agregar</button>
-                        </form>
-                        <div class="admin-chip-list" id="paymentsList"></div>
-                    </article>
+                        <!-- MÉTODOS DE PAGO -->
+                        <article class="admin-card glass-card">
+                            <h2>💳 Medios de Pago</h2>
+                            <form id="paymentForm" class="admin-form admin-inline">
+                                <input id="paymentName" type="text" placeholder="Nuevo método (Ej: PSE)" required>
+                                <button class="btn btn-primary" type="submit">Agregar</button>
+                            </form>
+                            <div class="admin-chip-list" id="paymentsList"></div>
+                        </article>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <div class="admin-modal" id="editModal" aria-hidden="true" role="dialog" aria-labelledby="editModalTitle">
+    <!-- Modal de Edición Rápida -->
+    <div class="admin-modal" id="editModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
         <div class="admin-modal-card glass-card">
             <header class="admin-modal-header">
-                <h2 id="editModalTitle">Editar producto</h2>
-                <button class="icon-close" id="editModalClose" type="button" aria-label="Cerrar edicion">x</button>
+                <h2 id="editModalTitle">Editar Producto</h2>
+                <button class="icon-close" id="editModalClose" type="button" aria-label="Cerrar ventana de edición">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                </button>
             </header>
 
             <form id="editProductForm" class="admin-form">
@@ -146,13 +126,13 @@
                 <label for="editProductName">Nombre</label>
                 <input id="editProductName" type="text" required>
 
-                <label for="editProductCategory">Categoria</label>
+                <label for="editProductCategory">Categoría</label>
                 <input id="editProductCategory" type="text" list="categoryOptions" required>
 
                 <label for="editProductPrice">Precio (COP)</label>
                 <input id="editProductPrice" type="number" min="0" step="100" required>
 
-                <label for="editProductDescription">Descripcion</label>
+                <label for="editProductDescription">Descripción</label>
                 <textarea id="editProductDescription" rows="3"></textarea>
 
                 <label for="editProductImageUrl">Imagen (URL)</label>
@@ -164,7 +144,7 @@
                 <div class="image-preview" id="editProductImagePreview">Sin imagen cargada</div>
 
                 <div class="admin-actions">
-                    <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                    <button class="btn btn-primary" type="submit">Guardar Cambios</button>
                     <button class="btn btn-ghost" id="editModalCancel" type="button">Cancelar</button>
                 </div>
             </form>

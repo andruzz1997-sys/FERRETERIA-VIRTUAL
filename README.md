@@ -6,10 +6,13 @@ Una plataforma de comercio electrónico moderna y funcional para ferreterías, d
 
 ### ✅ Funcionalidades Completas
 
-- **Catálogo de Productos**: 20+ productos con categorías
+- **Catálogo de Productos**: inventario dinámico con filtros y ofertas
 - **Búsqueda Inteligente**: Búsqueda avanzada con filtros
 - **Carrito de Compras**: Persistente (localStorage)
-- **Sistema de Pagos**: 4 métodos de pago diferentes
+- **Sistema de Pagos**: Nequi, Daviplata, Efecty, tarjeta, PSE y contraentrega
+- **Checkout Completo**: procesamiento simulado, comprobación y factura digital imprimible
+- **Cotizador Nacional**: productos, peso y tarifas por ciudades de Colombia
+- **Administración Protegida**: CRUD, imágenes, descuentos y banner global
 - **Gestor de Proveedores**: Información de proveedores confiables
 - **Animaciones Fluidas**: +30 animaciones CSS3
 - **Diseño Responsivo**: Funciona en todos los dispositivos
@@ -20,7 +23,7 @@ Una plataforma de comercio electrónico moderna y funcional para ferreterías, d
 ### 🎨 Diseño Visual
 
 - **Paleta de Colores**: Amarillo intenso (#FFD700) y Verde intenso (#228B22)
-- **Tipografía Moderna**: Segoe UI, sans-serif
+- **Tipografía Moderna**: Plus Jakarta Sans (400, 600, 700 y 800)
 - **Efectos Hover**: Interactividad suave
 - **Tema Oscuro/Claro**: Adaptativo
 
@@ -71,6 +74,13 @@ npm start
 ```
 
 El servidor estará en `http://localhost:3000`
+
+### Acceso de demostración al administrador
+
+- Usuario: `Admin`
+- Contraseña: `admin123`
+
+El acceso es una simulación del lado del cliente para fines demostrativos. En producción debe reemplazarse por autenticación del servidor, sesiones seguras y contraseñas cifradas.
 
 ### Opción 3: Live Server en VS Code
 

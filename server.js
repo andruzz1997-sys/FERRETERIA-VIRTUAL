@@ -9,8 +9,11 @@ const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware de seguridad
-app.use(helmet());
+// Middleware de seguridad y compresión
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
 app.use(cors());
 app.use(compression());
 

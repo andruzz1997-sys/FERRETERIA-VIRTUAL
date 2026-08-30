@@ -1,256 +1,818 @@
-﻿<!DOCTYPE html>
-<html lang="es" class="performance-mode">
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="FerreWeb: tienda virtual de ferreteria para compras online en COP.">
-    <title>FERREWEB | Ferreteria Online</title>
+    <meta name="description" content="FerreWeb: Plataforma e-commerce hipermoderna para ferretería, herramientas y construcción con arquitectura SPA y cotizador en línea.">
+    <meta name="theme-color" content="#021B12">
+    <title>FERREWEB | Herramientas, Materiales & E-Commerce SPA</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+    <!-- Tipografías Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/animations.css">
 </head>
-<body>
-    <div class="bg-decoration" aria-hidden="true"></div>
+<body class="cyber-bg-animated">
+    <!-- Canvas de Malla Cibernética y Partículas Neón -->
+    <canvas id="ambientCanvas" aria-hidden="true"></canvas>
 
-    <header class="site-header glass-card">
-        <nav class="site-nav">
-            <a href="#inicio" class="brand" aria-label="Ir al inicio">
-                <span class="brand-dot"></span>
-                <span class="brand-text">FERREWEB</span>
+    <!-- Banner global administrable -->
+    <aside class="global-promo-banner hidden" id="globalPromoBanner" aria-live="polite">
+        <div class="global-promo-inner">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13.5V10l13-5v13l-13-4.5Zm0 0 1.5 5h3L7 14.5M17 9a3 3 0 0 1 0 5"/></svg>
+            <strong id="globalPromoText"></strong>
+        </div>
+    </aside>
+
+    <!-- Barra de Anuncios Neón Superior -->
+    <div class="top-ticker" aria-label="Anuncios destacados">
+        <div class="ticker-wrap">
+            <div class="ticker-track">
+                <div class="ticker-item"><span class="highlight">⚡ DESPACHO PRIORITARIO:</span> Envíos a todo el país en 24-48 horas</div>
+                <div class="ticker-item"><span class="dot"></span> <span class="highlight">🚚 ENVÍO GRATIS:</span> En compras desde $350.000 COP</div>
+                <div class="ticker-item"><span class="dot"></span> <span class="highlight">🛠️ GARANTÍA OFICIAL SENA:</span> Herramientas certificadas de uso industrial</div>
+                <div class="ticker-item"><span class="dot"></span> <span class="highlight">🔒 PAGOS SEGUROS:</span> PSE, Tarjetas de Crédito, Nequi y Contra Entrega</div>
+                <!-- Duplicado para loop continuo -->
+                <div class="ticker-item"><span class="highlight">⚡ DESPACHO PRIORITARIO:</span> Envíos a todo el país en 24-48 horas</div>
+                <div class="ticker-item"><span class="dot"></span> <span class="highlight">🚚 ENVÍO GRATIS:</span> En compras desde $350.000 COP</div>
+                <div class="ticker-item"><span class="dot"></span> <span class="highlight">🛠️ GARANTÍA OFICIAL SENA:</span> Herramientas certificadas de uso industrial</div>
+                <div class="ticker-item"><span class="dot"></span> <span class="highlight">🔒 PAGOS SEGUROS:</span> PSE, Tarjetas de Crédito, Nequi y Contra Entrega</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Flotante con Glassmorphism -->
+    <header class="site-header">
+        <nav class="site-nav" aria-label="Navegación principal de FerreWeb">
+            <a href="#inicio" class="brand" data-route="inicio" aria-label="FERREWEB - Inicio">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" focusable="false">
+                        <path d="M13.8 3.5h4.4v9h8.3v4.4h-8.3v11.6h-4.4V16.9H5.5v-4.4h8.3z"/>
+                    </svg>
+                </span>
+                <span class="brand-text">FERRE<span>WEB</span></span>
             </a>
 
-            <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navLinks" type="button">
+            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menú" aria-controls="navLinks" aria-expanded="false">
                 <span></span>
                 <span></span>
             </button>
 
+            <!-- Enlaces SPA -->
             <ul class="nav-links" id="navLinks">
-                <li><a href="#inicio" class="nav-link">Inicio</a></li>
-                <li><a href="#catalogo" class="nav-link">Catalogo</a></li>
-                <li><a href="#ofertas" class="nav-link hidden" id="offersNav">Ofertas</a></li>
-                <li><a href="#pagos" class="nav-link">Pagos</a></li>
-                <li><a href="#contacto" class="nav-link">Contacto</a></li>
+                <li><a href="#inicio" class="nav-link active" data-route="inicio">Inicio</a></li>
+                <li><a href="#catalogo" class="nav-link" data-route="catalogo">Catálogo</a></li>
+                <li><a href="#cotizador" class="nav-link" data-route="cotizador">Cotizador</a></li>
+                <li><a href="#admin" class="nav-link" data-route="admin">Admin</a></li>
+                <li><a href="#checkout" class="nav-link" data-route="checkout">Checkout</a></li>
+                <li><a href="#auth" class="nav-link" data-route="auth" id="navAuthLink">Ingreso</a></li>
             </ul>
 
             <div class="header-actions">
-                <button class="btn btn-ghost" id="authBtn" type="button" data-auth-open="login">Iniciar sesion</button>
-                <button class="btn btn-ghost" id="authRegisterBtn" type="button" data-auth-open="register">Registrarse</button>
-                <button class="cart-btn" id="cartBtn" type="button" aria-label="Abrir carrito">
-                    Carrito
-                    <span class="cart-count" id="cartCount">0</span>
+                <button class="cart-btn" id="cartBtn" type="button" aria-label="Abrir carrito de compras">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M3 4h2l1.7 9.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.5L20 7H6.1M9 20h.01M17 20h.01"/>
+                    </svg>
+                    <span class="cart-label">Carrito</span>
+                    <span class="cart-count" id="cartCount" aria-live="polite">0</span>
                 </button>
             </div>
         </nav>
     </header>
 
-    <main>
-        <section id="inicio" class="hero section">
+    <!-- CONTENEDOR DE SECCIONES SPA -->
+    <main id="mainContent">
+        <!-- ===================================================================
+             SECCIÓN 1: INICIO (#inicio)
+             =================================================================== -->
+        <section id="inicio" class="spa-section hero section" data-spa-section>
             <div class="container hero-layout">
                 <div class="hero-copy">
-                    <p class="eyebrow">Ferreteria online moderna</p>
-                    <h1>Todo para tu obra, hogar o negocio en un solo lugar.</h1>
+                    <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Suministros para obra, hogar y taller</p>
+                    <h1>La ferretería que <span class="neon-text-yellow">responde</span> cuando la obra <span class="neon-text-green">no espera</span>.</h1>
                     <p>
-                        En FERREWEB encuentras herramientas, materiales y accesorios con compra rapida,
-                        pagos seguros y despacho eficiente.
+                        Plataforma de abastecimiento industrial con precios transparentes en pesos colombianos (COP), cotizaciones automáticas en línea y despacho garantizado a toda Colombia.
                     </p>
                     <div class="hero-actions">
-                        <a href="#catalogo" class="btn btn-primary">Comprar ahora</a>
-                        <a href="#pagos" class="btn btn-ghost">Ver metodos de pago</a>
+                        <a href="#catalogo" class="btn btn-neon-yellow" data-route="catalogo">
+                            Explorar Catálogo
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 7 7-7 7"/></svg>
+                        </a>
+                        <a href="#cotizador" class="btn btn-ghost" data-route="cotizador">
+                            Calculadora de Fletes
+                        </a>
+                    </div>
+                    <ul class="hero-proof" aria-label="Beneficios principales">
+                        <li><strong>100%</strong><span>Precios claros en COP</span></li>
+                        <li><strong>$350.000</strong><span>Envío gratis nacional desde</span></li>
+                        <li><strong>Norma SENA</strong><span>Garantía y calidad técnica</span></li>
+                    </ul>
+                </div>
+
+                <div class="hero-panels">
+                    <div class="hero-badge-floating">
+                        <span class="status-dot status-dot-green" aria-hidden="true"></span>
+                        <span>Inventario en Vivo</span>
+                    </div>
+
+                    <figure class="hero-visual">
+                        <img src="assets/ferreweb-hero-tools.jpg" width="1122" height="1402" alt="Herramientas profesionales en mesa de trabajo" fetchpriority="high">
+                        <figcaption>
+                            <span class="status-dot status-dot-green" aria-hidden="true"></span>
+                            Herramientas de alto rendimiento y precisión
+                        </figcaption>
+                    </figure>
+
+                    <div class="hero-panel-row">
+                        <article class="hero-panel hero-panel-dark">
+                            <span class="panel-index">01 / DESPACHO</span>
+                            <h3>Despacho Inmediato</h3>
+                            <p>Envíos directos a obra con rastreo en tiempo real.</p>
+                        </article>
+                        <article class="hero-panel hero-panel-accent">
+                            <span class="panel-index">02 / COTIZADOR</span>
+                            <h3>Cotización Formal</h3>
+                            <p>Calcula fletes y descarga tu cotización al instante.</p>
+                        </article>
                     </div>
                 </div>
-                <div class="hero-panels">
-                    <article class="hero-panel glass-card">
-                        <h3>+200 productos</h3>
-                        <p>Inventario pensado para venta virtual y compra recurrente.</p>
-                    </article>
-                    <article class="hero-panel glass-card">
-                        <h3>Pago en COP</h3>
-                        <p>Todos los precios y totales en pesos colombianos.</p>
-                    </article>
-                    <article class="hero-panel glass-card">
-                        <h3>Checkout simple</h3>
-                        <p>Carrito intuitivo con resumen de compra y metodos de pago.</p>
-                    </article>
-                </div>
             </div>
         </section>
 
-        <section id="catalogo" class="section">
+        <!-- ===================================================================
+             SECCIÓN 2: CATÁLOGO (#catalogo)
+             =================================================================== -->
+        <section id="catalogo" class="spa-section section hidden" data-spa-section aria-hidden="true">
             <div class="container">
                 <div class="section-head">
-                    <p class="eyebrow">Catalogo de productos</p>
-                    <h2>Busca, filtra y ordena para comprar en menos tiempo.</h2>
+                    <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Inventario en tiempo real</p>
+                    <h2>Catálogo de productos técnicos.</h2>
+                    <p class="section-intro">Filtra por categoría, busca por especificación técnica y ordena por precio con stock actualizado.</p>
+
+                    <!-- Chips Rápidos de Categoría -->
+                    <div class="category-chips" id="categoryChips" aria-label="Filtrar productos por categoría">
+                        <button class="chip-btn active" data-category="" type="button" aria-pressed="true">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+                            Todos los productos
+                        </button>
+                        <button class="chip-btn" data-category="Herramientas" type="button" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.7 6.3 3-3a4 4 0 0 1-5 5L6 15l-3 3 3 3 3-3 6.7-6.7a4 4 0 0 1 5-5l-3 3z"/></svg>
+                            Herramientas
+                        </button>
+                        <button class="chip-btn" data-category="Materiales" type="button" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v12H3zM3 14h18M8 8v6M16 14v6"/></svg>
+                            Materiales
+                        </button>
+                        <button class="chip-btn" data-category="Plomería" type="button" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h8v5H8v7a3 3 0 0 0 6 0v-2M12 8h5a3 3 0 0 1 3 3v2h-4"/></svg>
+                            Plomería
+                        </button>
+                        <button class="chip-btn" data-category="Pinturas" type="button" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13v5H4zM17 6h3v6h-8v3M12 14v7M9 21h6"/></svg>
+                            Pinturas
+                        </button>
+                        <button class="chip-btn" data-category="Seguridad" type="button" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v5c0 5.2 3.4 8.5 8 10 4.6-1.5 8-4.8 8-10V6zM9 12l2 2 4-5"/></svg>
+                            Seguridad
+                        </button>
+                        <button class="chip-btn" data-category="Accesorios" type="button" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l2 3-2 3H8L6 6zM12 9v12M8 21h8"/></svg>
+                            Accesorios
+                        </button>
+                    </div>
                 </div>
 
-                <div class="filters glass-card">
+                <div class="filters">
                     <label class="field">
                         <span>Buscar producto</span>
-                        <input id="searchInput" type="search" placeholder="Ej: taladro, cemento, broca...">
+                        <input id="search-input" type="search" placeholder="Ej.: taladro, cemento, broca, pintura..." autocomplete="off">
                     </label>
 
                     <label class="field">
-                        <span>Categoria</span>
-                        <select id="categoryFilter">
-                            <option value="">Todas las categorias</option>
+                        <span>Categoría</span>
+                        <select id="category-filter">
+                            <option value="">Todas las categorías</option>
                         </select>
                     </label>
 
                     <label class="field">
-                        <span>Ordenar por</span>
-                        <select id="sortFilter">
-                            <option value="relevance">Relevancia</option>
-                            <option value="price-asc">Precio: menor a mayor</option>
-                            <option value="price-desc">Precio: mayor a menor</option>
-                            <option value="category">Categoria</option>
+                        <span>Ordenar por precio</span>
+                        <select id="price-filter">
+                            <option value="relevance">Relevancia / Destacados</option>
+                            <option value="price-asc">Precio: Menor a mayor</option>
+                            <option value="price-desc">Precio: Mayor a menor</option>
                         </select>
                     </label>
                 </div>
 
-                <p class="results" id="resultsCount"></p>
-                <div class="products-grid" id="productsGrid"></div>
+                <p class="results" id="resultsCount" role="status" aria-live="polite"></p>
+                <div class="products-grid" id="productsContainer"></div>
             </div>
         </section>
 
-        <section id="ofertas" class="section hidden" aria-hidden="true">
+        <!-- ===================================================================
+             SECCIÓN 3: AUTENTICACIÓN (#auth) - VALIDACIONES SENA
+             =================================================================== -->
+        <section id="auth" class="spa-section section hidden" data-spa-section aria-hidden="true">
             <div class="container">
-                <div class="section-head">
-                    <p class="eyebrow">Ofertas activas</p>
-                    <h2>Descuentos disponibles por tiempo limitado.</h2>
+                <div class="auth-container glass-card neon-border-green">
+                    <div class="section-head" style="text-align: center; margin-bottom: 20px;">
+                        <p class="eyebrow" style="margin: 0 auto 10px;"><span class="dot" aria-hidden="true"></span> Acceso a la Plataforma</p>
+                        <h2 id="authHeading">Ingreso / Registro de Usuario</h2>
+                        <p class="section-intro" style="margin: 6px auto 0;">Validaciones estrictas de datos y credenciales seguras.</p>
+                    </div>
+
+                    <!-- Tabs Login / Registro -->
+                    <div class="auth-tabs-bar" role="tablist">
+                        <button type="button" id="tabLoginBtn" class="auth-tab-btn active" role="tab" aria-selected="true">Iniciar Sesión</button>
+                        <button type="button" id="tabRegisterBtn" class="auth-tab-btn" role="tab" aria-selected="false">Crear Cuenta</button>
+                    </div>
+
+                    <!-- FORMULARIO DE LOGIN -->
+                    <form id="spaLoginForm" class="cyber-form" novalidate>
+                        <div class="field">
+                            <label for="loginEmailInput">Correo Electrónico</label>
+                            <input id="loginEmailInput" type="email" placeholder="usuario@correo.com" autocomplete="email" required>
+                            <span class="validation-hint" id="loginEmailHint"></span>
+                        </div>
+
+                        <div class="field">
+                            <label for="loginPasswordInput">Contraseña</label>
+                            <input id="loginPasswordInput" type="password" placeholder="••••••••" autocomplete="current-password" required>
+                            <span class="validation-hint" id="loginPasswordHint"></span>
+                        </div>
+
+                        <button class="btn btn-neon-yellow full" type="submit">Ingresar a FerreWeb</button>
+                    </form>
+
+                    <!-- FORMULARIO DE REGISTRO (CON VALIDACIONES SENA) -->
+                    <form id="spaRegisterForm" class="cyber-form hidden" novalidate>
+                        <div class="field">
+                            <label for="regNameInput">Nombre Completo</label>
+                            <input id="regNameInput" type="text" placeholder="Ej: Carlos Ramírez Gómez" autocomplete="name" required>
+                            <span class="validation-hint" id="regNameHint"></span>
+                        </div>
+
+                        <div class="field">
+                            <label for="regDocInput">Cédula de Ciudadanía / NIT (Solo números)</label>
+                            <input id="regDocInput" type="text" inputmode="numeric" placeholder="Ej: 1020304050" maxlength="12" required>
+                            <span class="validation-hint" id="regDocHint"></span>
+                        </div>
+
+                        <div class="field">
+                            <label for="regEmailInput">Correo Electrónico</label>
+                            <input id="regEmailInput" type="email" placeholder="ejemplo@dominio.com" autocomplete="email" required>
+                            <span class="validation-hint" id="regEmailHint"></span>
+                        </div>
+
+                        <div class="field">
+                            <label for="regPasswordInput">Contraseña Segura</label>
+                            <input id="regPasswordInput" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required>
+                            <span class="validation-hint" id="regPasswordHint"></span>
+
+                            <!-- Checklist de Complejidad de Contraseña -->
+                            <ul class="password-checklist" id="passwordChecklist">
+                                <li id="chkLength"><span>○</span> Mínimo 8 caracteres</li>
+                                <li id="chkUppercase"><span>○</span> Al menos una letra mayúscula (A-Z)</li>
+                                <li id="chkNumber"><span>○</span> Al menos un número (0-9)</li>
+                            </ul>
+                        </div>
+
+                        <button class="btn btn-neon-yellow full" type="submit">Crear Cuenta Registrada</button>
+                    </form>
+
+                    <div id="authStatusBanner" style="margin-top: 14px; text-align: center; font-weight: 700;"></div>
                 </div>
-                <div class="offers-grid" id="offersGrid"></div>
             </div>
         </section>
 
-        <section id="pagos" class="section">
+        <!-- ===================================================================
+             SECCIÓN 4: ADMINISTRACIÓN CRUD (#admin)
+             =================================================================== -->
+        <section id="admin" class="spa-section section hidden" data-spa-section aria-hidden="true">
             <div class="container">
-                <div class="section-head">
-                    <p class="eyebrow">Pagos disponibles</p>
-                    <h2>Finaliza tus compras como prefieras.</h2>
-                </div>
-
-                <div class="payments-grid">
-                    <article class="payment-card glass-card">
-                        <h3>Tarjeta credito/debito</h3>
-                        <p>Visa, Mastercard, Amex y franquicias nacionales.</p>
-                    </article>
-                    <article class="payment-card glass-card">
-                        <h3>PSE</h3>
-                        <p>Debito directo desde cuentas bancarias en Colombia.</p>
-                    </article>
-                    <article class="payment-card glass-card">
-                        <h3>Transferencia</h3>
-                        <p>Bancolombia, Davivienda, Nequi, DaviPlata y mas.</p>
-                    </article>
-                    <article class="payment-card glass-card">
-                        <h3>Pago contra entrega</h3>
-                        <p>Efectivo o datfono al recibir el pedido.</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section id="contacto" class="section">
-            <div class="container contact-layout">
-                <div>
-                    <p class="eyebrow">Contacto</p>
-                    <h2>Atencion para ventas y soporte de pedidos.</h2>
-                    <p class="contact-copy">
-                        Horario: lunes a sabado de 7:00 a.m. a 7:00 p.m.<br>
-                        Email: ventas@ferreweb.com<br>
-                        WhatsApp: +57 300 000 0000
-                    </p>
-                </div>
-                <article class="contact-card glass-card">
-                    <h3>Compra segura FERREWEB</h3>
-                    <ul>
-                        <li>SSL en proceso de pago</li>
-                        <li>Confirmacion inmediata por correo</li>
-                        <li>Soporte humano para cada orden</li>
-                    </ul>
+                <article class="admin-login-card glass-card" id="adminLoginPanel">
+                    <div class="admin-login-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5zM12 14v3"/></svg>
+                    </div>
+                    <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Zona protegida</p>
+                    <h2>Acceso administrativo</h2>
+                    <p>Gestiona el inventario, las ofertas y el anuncio global de la tienda.</p>
+                    <form id="adminLoginForm" class="cyber-form" novalidate>
+                        <div class="field">
+                            <label for="adminUsername">Usuario</label>
+                            <input id="adminUsername" name="username" type="text" autocomplete="username" required placeholder="Admin">
+                        </div>
+                        <div class="field">
+                            <label for="adminPassword">Contraseña</label>
+                            <input id="adminPassword" name="password" type="password" autocomplete="current-password" required placeholder="Ingresa tu contraseña">
+                        </div>
+                        <p class="form-error" id="adminLoginError" role="alert"></p>
+                        <button class="btn btn-neon-yellow full" type="submit">Ingresar al panel</button>
+                    </form>
+                    <p class="admin-demo-note">Demo: usuario <strong>Admin</strong> · contraseña <strong>admin123</strong></p>
                 </article>
+
+                <div id="adminDashboard" class="hidden" tabindex="-1">
+                    <div class="section-head admin-heading-row">
+                        <div>
+                            <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Panel Administrativo</p>
+                            <h2>Control total de FerreWeb</h2>
+                            <p class="section-intro">Administra catálogo, precios, descuentos e información promocional desde un solo lugar.</p>
+                        </div>
+                        <button class="btn btn-ghost" type="button" id="adminLogoutBtn">Cerrar sesión</button>
+                    </div>
+
+                    <article class="admin-promo-card glass-card">
+                        <div>
+                            <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Alerta del sitio</p>
+                            <h3>Banner promocional global</h3>
+                            <p>El mensaje aparecerá en la parte superior para todos los clientes.</p>
+                        </div>
+                        <form id="adminPromoForm" class="admin-promo-form">
+                            <label for="adminPromoMessage">Mensaje promocional</label>
+                            <div class="admin-promo-controls">
+                                <input id="adminPromoMessage" type="text" maxlength="140" placeholder="¡Descuento del 15% en herramientas eléctricas hoy!">
+                                <button class="btn btn-neon-yellow" type="submit">Publicar</button>
+                                <button class="btn btn-ghost" id="adminPromoClear" type="button">Ocultar</button>
+                            </div>
+                        </form>
+                    </article>
+
+                <div class="admin-grid-layout">
+                    <!-- Formulario de Crear / Editar Producto -->
+                    <article class="glass-card" style="padding: 24px;">
+                        <h3 id="adminFormTitle" style="margin-bottom: 16px; color: var(--neon-yellow);">Agregar nuevo producto</h3>
+                        <form id="adminProductForm" class="cyber-form" novalidate>
+                            <input id="adminProdId" type="hidden">
+
+                            <div class="field">
+                                <label for="adminProdName">Nombre del Producto (Mínimo 4 caracteres)</label>
+                                <input id="adminProdName" type="text" placeholder="Ej: Esmeril Angular 4 1/2 pulg" required>
+                                <span class="validation-hint" id="adminProdNameHint"></span>
+                            </div>
+
+                            <div class="field">
+                                <label for="adminProdCategory">Categoría</label>
+                                <select id="adminProdCategory" required>
+                                    <option value="">Seleccione una categoría</option>
+                                    <option value="Herramientas">Herramientas</option>
+                                    <option value="Materiales">Materiales</option>
+                                    <option value="Plomería">Plomería</option>
+                                    <option value="Pinturas">Pinturas</option>
+                                    <option value="Seguridad">Seguridad</option>
+                                    <option value="Accesorios">Accesorios</option>
+                                    <option value="Electricidad">Electricidad</option>
+                                </select>
+                                <span class="validation-hint" id="adminProdCategoryHint"></span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="field">
+                                    <label for="adminProdPrice">Precio COP (> 0)</label>
+                                    <input id="adminProdPrice" type="number" min="100" step="100" placeholder="Ej: 185000" required>
+                                    <span class="validation-hint" id="adminProdPriceHint"></span>
+                                </div>
+                                <div class="field">
+                                    <label for="adminProdStock">Stock Unidades (> 0)</label>
+                                    <input id="adminProdStock" type="number" min="1" step="1" placeholder="Ej: 25" required>
+                                    <span class="validation-hint" id="adminProdStockHint"></span>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label for="adminProdDesc">Descripción Técnica</label>
+                                <textarea id="adminProdDesc" rows="3" placeholder="Especificaciones, potencia, garantía y usos recomendados..." required></textarea>
+                                <span class="validation-hint" id="adminProdDescHint"></span>
+                            </div>
+
+                            <div class="field">
+                                <label for="adminProdImage">URL de imagen (Opcional)</label>
+                                <input id="adminProdImage" type="url" inputmode="url" placeholder="https://ejemplo.com/producto.jpg">
+                                <span class="field-help">Puedes enlazar una imagen o cargar un archivo optimizado.</span>
+                            </div>
+
+                            <div class="field">
+                                <label for="adminProdImageFile">Subir imagen (Opcional)</label>
+                                <input id="adminProdImageFile" type="file" accept="image/png,image/jpeg,image/webp">
+                                <span class="field-help">PNG, JPG o WebP de hasta 1.5 MB. La imagen cargada tiene prioridad sobre la URL.</span>
+                            </div>
+
+                            <fieldset class="offer-fieldset">
+                                <legend>Oferta del producto</legend>
+                                <label class="switch-row" for="adminProdOnSale">
+                                    <input id="adminProdOnSale" type="checkbox">
+                                    <span class="switch-track" aria-hidden="true"><span></span></span>
+                                    <span>Activar descuento</span>
+                                </label>
+                                <label class="field offer-percent-field" for="adminProdDiscount">
+                                    <span>Porcentaje de descuento</span>
+                                    <input id="adminProdDiscount" type="number" min="1" max="90" step="1" value="10" disabled>
+                                </label>
+                            </fieldset>
+
+                            <div style="display: flex; gap: 10px; margin-top: 6px;">
+                                <button class="btn btn-neon-yellow" type="submit" id="adminSubmitBtn">Guardar Producto</button>
+                                <button class="btn btn-ghost" type="button" id="adminCancelEditBtn" style="display: none;">Cancelar</button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <!-- Lista de Productos en Inventario -->
+                    <article class="glass-card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 16px; color: var(--neon-green);">Inventario actual (<span id="adminTotalCount">0</span>)</h3>
+                        <div class="admin-list-scroll" id="adminProductList">
+                            <!-- Rellenado dinámicamente con JS -->
+                        </div>
+                    </article>
+                </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             SECCIÓN 5: COTIZADOR Y CALCULADORA DE FLETES (#cotizador)
+             =================================================================== -->
+        <section id="cotizador" class="spa-section section hidden" data-spa-section aria-hidden="true">
+            <div class="container">
+                <div class="section-head">
+                    <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Cotizador & Fletes</p>
+                    <h2>Calculadora de Envíos y Cotizaciones</h2>
+                    <p class="section-intro">Calcula tarifas de flete según zona geográfica, peso estimado y genera una cotización formal instantánea.</p>
+                </div>
+
+                <div class="cotizador-grid">
+                    <!-- Parámetros de Cotización -->
+                    <article class="glass-card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 16px; color: var(--neon-yellow);">Parámetros del envío</h3>
+                        <form id="cotizadorForm" class="cyber-form">
+                            <div class="field">
+                                <label for="quoteZone">Ciudad de destino en Colombia</label>
+                                <select id="quoteZone" required>
+                                    <option value="bogota" data-city="Bogotá D.C." data-rate="12000">Bogotá D.C. — $12.000</option>
+                                    <option value="medellin" data-city="Medellín" data-rate="16000">Medellín — $16.000</option>
+                                    <option value="barranquilla" data-city="Barranquilla" data-rate="22000">Barranquilla — $22.000</option>
+                                    <option value="cali" data-city="Cali" data-rate="17500">Cali — $17.500</option>
+                                    <option value="bucaramanga" data-city="Bucaramanga" data-rate="18000">Bucaramanga — $18.000</option>
+                                    <option value="curumani" data-city="Curumaní" data-rate="26000">Curumaní — $26.000</option>
+                                    <option value="cartagena" data-city="Cartagena" data-rate="22500">Cartagena — $22.500</option>
+                                    <option value="pereira" data-city="Pereira" data-rate="15000">Pereira — $15.000</option>
+                                    <option value="manizales" data-city="Manizales" data-rate="15500">Manizales — $15.500</option>
+                                    <option value="nacional" data-city="Otro destino nacional" data-rate="28000">Otro destino nacional — $28.000</option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label for="quoteWeight">Peso Estimado de Carga</label>
+                                <select id="quoteWeight">
+                                    <option value="1" data-mult="1">Hasta 5 kg (Paquetería estándar)</option>
+                                    <option value="2" data-mult="1.5">6 kg a 20 kg (Herramientas y accesorios)</option>
+                                    <option value="3" data-mult="2.2">21 kg a 50 kg (Bultos y materiales medios)</option>
+                                    <option value="4" data-mult="3.5">Más de 50 kg (Carga pesada estructural)</option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label for="quoteProductSelect">Añadir Producto a la Cotización</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <select id="quoteProductSelect" style="flex: 1;"></select>
+                                    <button class="btn btn-ghost" type="button" id="quoteAddProductBtn">+ Añadir</button>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label>Productos en la Cotización Actual</label>
+                                <div id="quoteItemsList" style="display: grid; gap: 6px; max-height: 160px; overflow-y: auto; padding: 8px; background: rgba(1, 17, 11, 0.6); border-radius: 6px; border: 1px solid var(--border-glass);">
+                                    <span style="color: var(--text-dim); font-size: 0.84rem;">Sin productos seleccionados aún. Usa el selector arriba o el carrito.</span>
+                                </div>
+                            </div>
+                        </form>
+                    </article>
+
+                    <!-- Resumen y Generador de Cotización -->
+                    <article class="cotizacion-receipt">
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px;">
+                            <span class="brand-text" style="font-size: 1.3rem;">FERRE<span>WEB</span></span>
+                            <span style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--neon-green);">COTIZACIÓN OFICIAL</span>
+                        </div>
+
+                        <div class="quote-meta">
+                            <span>Destino</span>
+                            <strong id="quoteCityDisplay">Bogotá D.C.</strong>
+                        </div>
+
+                        <div class="quote-table-wrap">
+                            <table class="quote-table">
+                                <thead><tr><th>Producto</th><th>Cant.</th><th>Total</th></tr></thead>
+                                <tbody id="quoteTableBody">
+                                    <tr><td colspan="3">Agrega productos para comenzar.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="receipt-row">
+                            <span>Subtotal Productos:</span>
+                            <strong id="quoteSubtotalDisplay">$0</strong>
+                        </div>
+                        <div class="receipt-row">
+                            <span>Valor Flete Estimado:</span>
+                            <strong id="quoteShippingDisplay">$12.000</strong>
+                        </div>
+                        <div class="receipt-row">
+                            <span>IVA Estimado (19% incluido):</span>
+                            <strong id="quoteIvaDisplay">$0</strong>
+                        </div>
+                        <div class="receipt-row total-row">
+                            <span>Total Cotizado:</span>
+                            <strong id="quoteTotalDisplay">$12.000</strong>
+                        </div>
+
+                        <div style="display: grid; gap: 8px; margin-top: 10px;">
+                            <button class="btn btn-neon-yellow full" type="button" id="quotePrintBtn">
+                                Imprimir / Guardar Cotización en PDF
+                            </button>
+                            <button class="btn btn-ghost full" type="button" id="quoteTransferToCartBtn">
+                                Pasar cotización al carrito y comprar
+                            </button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             SECCIÓN 6: CHECKOUT (#checkout) - VALIDACIONES ESTRICTAS
+             =================================================================== -->
+        <section id="checkout" class="spa-section section hidden" data-spa-section aria-hidden="true">
+            <div class="container">
+                <div class="section-head">
+                    <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Pasarela Segura</p>
+                    <h2>Finalizar Compra y Pago</h2>
+                    <p class="section-intro">Ingresa los datos del destinatario y la información de pago verificada para procesar tu orden.</p>
+                </div>
+
+                <div class="checkout-grid">
+                    <!-- Formulario de Checkout -->
+                    <article class="glass-card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 16px; color: var(--neon-yellow);">Datos del cliente y medio de pago</h3>
+                        <form id="spaCheckoutForm" class="cyber-form" novalidate>
+                            <div class="form-error-summary hidden" id="checkoutErrorSummary" tabindex="-1" role="alert"></div>
+                            <div class="field">
+                                <label for="chkName">Nombre del Titular / Destinatario</label>
+                                <input id="chkName" type="text" placeholder="Ej: Andrés Felipe Morales" autocomplete="name" required>
+                                <span class="validation-hint" id="chkNameHint"></span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+                                <div class="field">
+                                    <label for="chkPhone">Teléfono Móvil (10 dígitos)</label>
+                                    <input id="chkPhone" type="tel" inputmode="numeric" placeholder="Ej: 3101234567" maxlength="10" required>
+                                    <span class="validation-hint" id="chkPhoneHint"></span>
+                                </div>
+                                <div class="field">
+                                    <label for="chkCity">Ciudad / Municipio</label>
+                                    <input id="chkCity" type="text" placeholder="Ej: Bogotá" required>
+                                    <span class="validation-hint" id="chkCityHint"></span>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label for="chkEmail">Correo electrónico</label>
+                                <input id="chkEmail" type="email" placeholder="cliente@correo.com" autocomplete="email" required>
+                                <span class="validation-hint" id="chkEmailHint"></span>
+                            </div>
+
+                            <div class="field">
+                                <label for="chkAddress">Dirección de envío <span class="optional-label">(Opcional)</span></label>
+                                <input id="chkAddress" type="text" placeholder="Déjala vacía para retiro en tienda o consulta previa" autocomplete="street-address">
+                                <span class="validation-hint" id="chkAddressHint"></span>
+                            </div>
+
+                            <fieldset class="payment-method-fieldset">
+                                <legend>Selecciona el medio de pago</legend>
+                                <div class="payment-method-grid" id="paymentMethodGrid">
+                                    <label class="payment-method-card">
+                                        <input type="radio" name="paymentMethod" value="nequi" required>
+                                        <span class="payment-icon payment-icon-nequi" aria-hidden="true">N</span>
+                                        <span>Nequi</span>
+                                    </label>
+                                    <label class="payment-method-card">
+                                        <input type="radio" name="paymentMethod" value="daviplata">
+                                        <span class="payment-icon payment-icon-daviplata" aria-hidden="true">D</span>
+                                        <span>Daviplata</span>
+                                    </label>
+                                    <label class="payment-method-card">
+                                        <input type="radio" name="paymentMethod" value="efecty">
+                                        <span class="payment-icon payment-icon-efecty" aria-hidden="true">E</span>
+                                        <span>Efecty</span>
+                                    </label>
+                                    <label class="payment-method-card">
+                                        <input type="radio" name="paymentMethod" value="card" checked>
+                                        <span class="payment-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 10h18M7 15h3"/></svg>
+                                        </span>
+                                        <span>Tarjeta</span>
+                                    </label>
+                                    <label class="payment-method-card">
+                                        <input type="radio" name="paymentMethod" value="pse">
+                                        <span class="payment-icon payment-icon-pse" aria-hidden="true">PSE</span>
+                                        <span>Débito bancario</span>
+                                    </label>
+                                    <label class="payment-method-card">
+                                        <input type="radio" name="paymentMethod" value="cash">
+                                        <span class="payment-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24"><path d="M3 7h18v10H3zM7 12h.01M17 12h.01M12 9a3 3 0 0 0 0 6"/></svg>
+                                        </span>
+                                        <span>Contraentrega</span>
+                                    </label>
+                                </div>
+                            </fieldset>
+
+                            <div class="payment-detail-panel" id="paymentDetailPanel" aria-live="polite"></div>
+
+                            <div id="cardPaymentFields" class="card-payment-fields">
+                                <h4>Datos de tarjeta (16 dígitos, MM/AA, CVV)</h4>
+
+                            <div class="field">
+                                <label for="chkCardNumber">Número de Tarjeta (16 dígitos)</label>
+                                <input id="chkCardNumber" type="text" inputmode="numeric" placeholder="4532 •••• •••• 1234" maxlength="19" required>
+                                <span class="validation-hint" id="chkCardNumberHint"></span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="field">
+                                    <label for="chkCardExpiry">Expiración (MM/AA)</label>
+                                    <input id="chkCardExpiry" type="text" inputmode="numeric" placeholder="MM/AA" maxlength="5" required>
+                                    <span class="validation-hint" id="chkCardExpiryHint"></span>
+                                </div>
+                                <div class="field">
+                                    <label for="chkCardCvv">Código CVC/CVV (3 dígitos)</label>
+                                    <input id="chkCardCvv" type="password" inputmode="numeric" placeholder="•••" maxlength="3" required>
+                                    <span class="validation-hint" id="chkCardCvvHint"></span>
+                                </div>
+                            </div>
+                            </div>
+
+                            <button class="btn btn-neon-yellow full" type="submit" id="chkPayButton" style="margin-top: 8px;">
+                                Pagar y Confirmar
+                            </button>
+
+                            <div class="payment-processing hidden" id="paymentProcessing" role="status" aria-live="polite">
+                                <div class="processing-copy"><span>Procesando pago seguro…</span><strong id="paymentProgressLabel">0%</strong></div>
+                                <div class="processing-track"><span id="paymentProgressBar"></span></div>
+                            </div>
+                        </form>
+                    </article>
+
+                    <!-- Preview de Tarjeta y Resumen de Orden -->
+                    <article>
+                        <div class="card-preview-widget">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="card-chip"></div>
+                                <span style="font-weight: 800; color: var(--neon-yellow);">FERREWEB PAY</span>
+                            </div>
+                            <div class="card-number-display" id="cardPreviewNumber">•••• •••• •••• ••••</div>
+                            <div class="card-bottom-info">
+                                <div>
+                                    <span style="font-size: 0.65rem; color: var(--text-dim);">TITULAR</span>
+                                    <div id="cardPreviewName">NOMBRE TITULAR</div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.65rem; color: var(--text-dim);">EXPIRA</span>
+                                    <div id="cardPreviewExpiry">MM/AA</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cotizacion-receipt">
+                            <h3 style="color: var(--neon-yellow); font-size: 1.2rem;">Resumen de la Compra</h3>
+                            <div class="receipt-row">
+                                <span>Total Productos:</span>
+                                <strong id="checkoutSubtotalDisplay">$0</strong>
+                            </div>
+                            <div class="receipt-row">
+                                <span>Costo de Envío:</span>
+                                <strong id="checkoutShippingDisplay">$0</strong>
+                            </div>
+                            <div class="receipt-row total-row">
+                                <span>Total a Debitar:</span>
+                                <strong id="checkoutTotalDisplay">$0</strong>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <section class="payment-success hidden" id="paymentSuccess" aria-labelledby="paymentSuccessTitle" tabindex="-1">
+                    <div class="success-mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>
+                    </div>
+                    <p class="eyebrow">Transacción aprobada</p>
+                    <h2 id="paymentSuccessTitle">¡Pago exitoso!</h2>
+                    <p id="paymentNotificationText"></p>
+                    <article class="digital-invoice">
+                        <header class="invoice-header">
+                            <div><span class="brand-text">FERRE<span>WEB</span></span><small>Factura digital</small></div>
+                            <div><strong id="invoiceOrderId">FW-000000</strong><small id="invoiceDate"></small></div>
+                        </header>
+                        <dl class="invoice-customer" id="invoiceCustomer"></dl>
+                        <div class="invoice-table-wrap">
+                            <table class="invoice-table">
+                                <thead><tr><th>Producto</th><th>Cant.</th><th>Unitario</th><th>Total</th></tr></thead>
+                                <tbody id="invoiceItems"></tbody>
+                                <tfoot id="invoiceTotals"></tfoot>
+                            </table>
+                        </div>
+                    </article>
+                    <div class="success-actions">
+                        <button class="btn btn-neon-yellow" type="button" id="printInvoiceBtn">Imprimir factura</button>
+                        <a href="#catalogo" class="btn btn-ghost" data-route="catalogo">Volver al catálogo</a>
+                    </div>
+                </section>
             </div>
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="site-footer">
-        <p>2026 FERREWEB. Tienda virtual de ferreteria.</p>
+        <div class="container footer-inner">
+            <a href="#inicio" class="footer-brand" data-route="inicio">FERRE<span>WEB</span></a>
+            <p>E-commerce de herramientas y suministros industriales. Cumplimiento curricular SENA.</p>
+            <span>© 2026 FERREWEB • Colombia</span>
+        </div>
     </footer>
 
+    <!-- Botón Flotante Asesor en Línea con Radar -->
+    <a href="https://wa.me/573001234567?text=Hola,%20quisiera%20asesoría%20sobre%20los%20productos%20de%20FerreWeb" target="_blank" rel="noopener noreferrer" class="floating-advisor" aria-label="Contactar asesor en tiempo real">
+        <span class="advisor-radar-icon">
+            <span class="advisor-radar-ring"></span>
+            <span class="advisor-badge-online"></span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </span>
+        <span>Asesor Neón</span>
+    </a>
+
+    <!-- Overlay Global -->
     <div class="overlay hidden" id="overlay"></div>
 
-    <aside class="cart-drawer hidden" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
+    <!-- Drawer del Carrito Lateral -->
+    <aside class="cart-drawer" id="cartDrawer" role="dialog" aria-modal="true" aria-labelledby="cartTitle" aria-hidden="true">
         <header class="drawer-header">
             <h2 id="cartTitle">Tu carrito</h2>
-            <button class="icon-close" id="closeCartBtn" type="button" aria-label="Cerrar carrito">x</button>
+            <button class="icon-close" id="closeCartBtn" type="button" aria-label="Cerrar carrito">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
         </header>
 
         <div class="drawer-content">
+            <div class="free-shipping-card">
+                <p class="free-shipping-msg" id="freeShippingMsg">Calculando envío gratis...</p>
+                <div class="shipping-bar-container">
+                    <div class="shipping-bar-fill" id="shippingProgressFill" style="width: 0%;"></div>
+                </div>
+            </div>
+
             <div class="cart-items" id="cartItems"></div>
 
-            <div class="cart-summary glass-card">
-                <div class="summary-row">
+            <div class="cotizacion-receipt" style="margin-top: 10px;">
+                <div class="receipt-row">
                     <span>Subtotal</span>
                     <strong id="subtotalValue">$0</strong>
                 </div>
-                <div class="summary-row">
-                    <span>Envio</span>
+                <div class="receipt-row">
+                    <span>Envío</span>
                     <strong id="shippingValue">$0</strong>
                 </div>
-                <div class="summary-row total">
+                <div class="receipt-row total-row">
                     <span>Total COP</span>
                     <strong id="totalValue">$0</strong>
                 </div>
 
-                <fieldset class="payment-methods" id="paymentMethods">
-                    <legend>Metodo de pago</legend>
-                </fieldset>
-
-                <form id="checkoutForm" class="checkout-form">
-                    <input id="checkoutName" type="text" placeholder="Nombre completo" required>
-                    <input id="checkoutPhone" type="tel" placeholder="Telefono" required>
-                    <input id="checkoutAddress" type="text" placeholder="Direccion de entrega" required>
-                    <button class="btn btn-primary full" type="submit">Finalizar compra</button>
-                </form>
+                <a href="#checkout" class="btn btn-neon-yellow full" id="goToCheckoutFromCartBtn" data-route="checkout" style="margin-top: 10px;">
+                    Ir a Checkout / Finalizar Compra
+                </a>
             </div>
         </div>
     </aside>
 
-    <section class="auth-modal hidden" id="authModal" aria-labelledby="authTitle" aria-hidden="true">
+    <!-- Modal Quick View -->
+    <div class="quickview-modal hidden" id="quickViewModal" role="dialog" aria-modal="true" aria-labelledby="quickViewTitle" aria-hidden="true">
         <header class="drawer-header">
-            <h2 id="authTitle">Acceso FERREWEB</h2>
-            <button class="icon-close" id="closeAuthBtn" type="button" aria-label="Cerrar autenticacion">x</button>
+            <h2 id="quickViewTitle">Detalles del Producto</h2>
+            <button class="icon-close" id="closeQuickViewBtn" type="button" aria-label="Cerrar vista rápida">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
         </header>
+        <div class="quickview-grid" id="quickViewContent"></div>
+    </div>
 
-        <div class="auth-tabs" role="tablist">
-            <button type="button" class="auth-tab active" data-auth-tab="login">Iniciar sesion</button>
-            <button type="button" class="auth-tab" data-auth-tab="register">Registrarse</button>
-        </div>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-        <form id="loginForm" class="auth-form">
-            <label for="loginEmail">Correo</label>
-            <input id="loginEmail" type="email" required>
-            <label for="loginPassword">Contrasena</label>
-            <input id="loginPassword" type="password" required>
-            <button class="btn btn-primary full" type="submit">Ingresar</button>
-        </form>
-
-        <form id="registerForm" class="auth-form hidden">
-            <label for="registerName">Nombre completo</label>
-            <input id="registerName" type="text" required>
-            <label for="registerEmail">Correo</label>
-            <input id="registerEmail" type="email" required>
-            <label for="registerPassword">Contrasena</label>
-            <input id="registerPassword" type="password" minlength="6" required>
-            <button class="btn btn-primary full" type="submit">Crear cuenta</button>
-        </form>
-
-        <p class="auth-message" id="authMessage" aria-live="polite"></p>
-    </section>
-
-    <div class="toast" id="toast"></div>
-
+    <!-- Scripts de la Aplicación -->
     <script src="firebase-config.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
