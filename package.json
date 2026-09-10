@@ -1,36 +1,39 @@
 {
   "name": "ferreweb",
   "version": "1.0.0",
-  "description": "Tienda de e-commerce moderna para ferreterías con funcionalidades completas",
-  "main": "start-server.js",
-  "type": "commonjs",
+  "description": "FERREWEB - Tienda virtual de ferretería en React JS (Evidencia GA7-220501096-AA4-EV03)",
+  "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "start": "node start-server.js",
-    "serve": "node server.js",
-    "dev": "node start-server.js",
-    "build": "echo 'Build script - minificar en producción'",
-    "test": "echo 'Testing...'"
+    "serve": "node server.js"
   },
   "keywords": [
     "ecommerce",
-    "ferretería",
+    "ferreteria",
+    "react",
     "tienda-online",
     "javascript",
-    "responsive"
+    "responsive",
+    "sena"
   ],
-  "author": "FerreWeb",
+  "author": "FerreWeb Team",
   "license": "MIT",
   "dependencies": {
+    "lucide-react": "^0.475.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
     "express": "^4.18.2",
     "compression": "^1.7.4",
-    "helmet": "^7.0.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
   }
 }
+

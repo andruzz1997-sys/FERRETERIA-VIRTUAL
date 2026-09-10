@@ -1,0 +1,13 @@
+========================================================================
+EVIDENCIA: GA7-220501096-AA4-EV03
+Componente frontend del proyecto formativo y proyectos de clase.
+PROYECTO: FERREWEB - Tienda Virtual de Ferretería
+========================================================================
+
+ENLACE DEL REPOSITORIO DE GITHUB:
+https://github.com/andruzz1997-sys/FERRETERIA-VIRTUAL.git
+
+DESCRIPCIÓN:
+Repositorio oficial del proyecto formativo FERREWEB con el desarrollo 
+del componente frontend modular construido en React JS, Vite y CSS3.
+========================================================================
