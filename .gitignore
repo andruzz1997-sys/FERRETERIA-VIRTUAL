@@ -1,0 +1,67 @@
+# Dependencias
+node_modules/
+package-lock.json
+yarn.lock
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Archivos de editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build
+dist/
+build/
+*.min.js
+*.min.css
+
+# Cache
+.cache/
+.eslintcache
+
+# OS
+Thumbs.db
+.history/
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# Archivos temporales
+temp/
+tmp/
+*.tmp
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+uploads/
+public/uploads/
+
+# Variables secretas
+secret.js
+secrets.json
+credentials.json
