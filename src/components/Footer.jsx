@@ -71,10 +71,10 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Barra Inferior de Derechos y SENA */}
+        {/* Barra Inferior de Derechos */}
         <div className="footer-bottom">
           <p>© 2026 FERREWEB. Todos los derechos reservados.</p>
-          <p>Proyecto Formativo SENA • Evidencia GA7-220501096-AA4-EV03</p>
+          <p>Ferretería Industrial y del Hogar • Envíos y Suministros a toda Colombia</p>
         </div>
       </div>
     </footer>

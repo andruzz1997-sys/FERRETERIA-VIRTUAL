@@ -14,20 +14,31 @@ import {
   Tag
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { productos, categorias } from '../data/productos';
+import { productos as defaultProductos, categorias } from '../data/productos';
+import { obtenerProductos } from '../services/api';
 import heroImage from '../assets/images/ferreweb-hero-tools.jpg';
 
 /**
  * Página Principal (Home) de FERREWEB.
  * Presenta la ferretería, imagen principal, beneficios clave,
- * categorías interactivas y productos en oferta o destacados.
+ * categorías interactivas y productos en oferta o destacados consumidos desde la API REST.
  */
 export default function Home({ onAddToCart }) {
   const navigate = useNavigate();
+  const [listaProductos, setListaProductos] = React.useState(defaultProductos);
+
+  // Consumir productos desde el backend API
+  React.useEffect(() => {
+    obtenerProductos().then((data) => {
+      if (data && data.length > 0) {
+        setListaProductos(data);
+      }
+    });
+  }, []);
 
   // Filtrar productos destacados o en oferta para la página principal
-  const productosDestacados = productos.slice(0, 4);
-  const productosEnOferta = productos.filter((p) => p.enOferta).slice(0, 4);
+  const productosDestacados = listaProductos.slice(0, 4);
+  const productosEnOferta = listaProductos.filter((p) => p.enOferta).slice(0, 4);
 
   // Mapeo de iconos para las categorías
   const getCategoryIcon = (id) => {
@@ -84,7 +95,7 @@ export default function Home({ onAddToCart }) {
                 <span>Envío gratis nacional desde</span>
               </div>
               <div className="hero-stat-item">
-                <strong>Norma SENA</strong>
+                <strong>100% Original</strong>
                 <span>Garantía y calidad técnica</span>
               </div>
             </div>

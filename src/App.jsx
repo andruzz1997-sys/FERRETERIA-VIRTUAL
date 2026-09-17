@@ -2,18 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ClientAuthModal from './components/ClientAuthModal';
+import AdminAuthModal from './components/AdminAuthModal';
 import Home from './pages/Home';
 import Catalogo from './pages/Catalogo';
 import DetalleProducto from './pages/DetalleProducto';
+import Admin from './pages/Admin';
 import { formatearPrecioCOP } from './data/productos';
-import { X, Trash2, Plus, Minus, CheckCircle, ShoppingBag, ArrowRight } from 'lucide-react';
+import { crearPago } from './services/api';
+import { X, Trash2, Plus, Minus, CheckCircle, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 
 /**
  * Componente Principal App.
  * Maneja el estado global del carrito de compras, el modal lateral (Drawer),
- * las notificaciones Toast y las rutas principales del proyecto FERREWEB.
+ * la autenticación independiente (Clientes y Admin), pasarela de pago y rutas.
  */
 export default function App() {
+  // Estado persistente del usuario (localStorage)
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('ferreweb_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
   // Estado persistente del carrito de compras (localStorage)
   const [cart, setCart] = useState(() => {
     try {
@@ -35,6 +53,14 @@ export default function App() {
       console.error("Error al guardar carrito en localStorage:", e);
     }
   }, [cart]);
+
+  // Cerrar sesión
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('ferreweb_user');
+    localStorage.removeItem('ferreweb_token');
+    showToast('Has cerrado sesión correctamente.');
+  };
 
   // Mostrar mensaje toast temporal
   const showToast = (message) => {
@@ -102,12 +128,47 @@ export default function App() {
   const faltanteEnvioGratis = Math.max(0, envioGratisMinimo - subtotal);
   const porcentajeEnvio = Math.min(100, Math.round((subtotal / envioGratisMinimo) * 100));
 
+  // Función para procesar el pago y redirigir a pasarela real (Wompi / Mercado Pago)
+  const handleFinalizarCompra = async () => {
+    if (cart.length === 0) return;
+    setIsProcessingPayment(true);
+    showToast('Conectando con la pasarela de pagos segura...');
+
+    const costoEnvio = subtotal >= envioGratisMinimo ? 0 : 12000;
+    const totalFinal = subtotal + costoEnvio;
+
+    try {
+      const resp = await crearPago({
+        items: cart,
+        total: totalFinal,
+        customer: currentUser || { nombre: 'Cliente FerreWeb' }
+      });
+
+      if (resp && resp.url) {
+        showToast('¡Orden generada! Redirigiendo a Wompi Checkout...');
+        setTimeout(() => {
+          window.location.href = resp.url;
+        }, 800);
+      } else {
+        throw new Error('No se recibió la URL de la pasarela');
+      }
+    } catch (err) {
+      console.error('Error al procesar pago:', err);
+      showToast('Error al conectar con la pasarela: ' + err.message);
+      setIsProcessingPayment(false);
+    }
+  };
+
   return (
     <div className="app-layout">
       {/* 1. BARRA DE NAVEGACIÓN */}
       <Navbar
         cartCount={totalItems}
         onOpenCart={() => setIsCartOpen(true)}
+        currentUser={currentUser}
+        onOpenClientModal={() => setIsClientModalOpen(true)}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* 2. ENRUTAMIENTO Y CONTENIDO PRINCIPAL */}
@@ -116,6 +177,15 @@ export default function App() {
           <Route path="/" element={<Home onAddToCart={addToCart} />} />
           <Route path="/catalogo" element={<Catalogo onAddToCart={addToCart} />} />
           <Route path="/producto/:id" element={<DetalleProducto onAddToCart={addToCart} />} />
+          <Route
+            path="/admin"
+            element={
+              <Admin
+                currentUser={currentUser}
+                onOpenAuthModal={() => setIsAdminModalOpen(true)}
+              />
+            }
+          />
           {/* Ruta fallback 404 */}
           <Route
             path="*"
@@ -309,13 +379,21 @@ export default function App() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  style={{ width: '100%', marginBottom: '10px' }}
-                  onClick={() => {
-                    alert(`¡Gracias por tu pedido en FERREWEB!\nTotal a procesar: ${formatearPrecioCOP(subtotal + (subtotal >= envioGratisMinimo ? 0 : 12000))}\n\nEn una fase posterior se integrará la pasarela de pagos.`);
-                  }}
+                  style={{ width: '100%', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  disabled={isProcessingPayment}
+                  onClick={handleFinalizarCompra}
                 >
-                  Finalizar Pedido
-                  <ArrowRight size={18} />
+                  {isProcessingPayment ? (
+                    <>
+                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                      <span>Conectando Pasarela...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Finalizar Compra</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -332,7 +410,26 @@ export default function App() {
         </div>
       )}
 
-      {/* 5. NOTIFICACIONES TOAST */}
+      {/* 5. MODALES DE AUTENTICACIÓN INDEPENDIENTES */}
+      <ClientAuthModal
+        isOpen={isClientModalOpen}
+        onClose={() => setIsClientModalOpen(false)}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+          showToast(`¡Bienvenido a FerreWeb, ${user.nombre}!`);
+        }}
+      />
+
+      <AdminAuthModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+          showToast(`¡Sesión de Administrador activa!`);
+        }}
+      />
+
+      {/* 6. NOTIFICACIONES TOAST */}
       {toastMessage && (
         <div className="toast-container" role="status" aria-live="polite">
           <div className="toast-item">

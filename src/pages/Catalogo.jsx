@@ -2,21 +2,34 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, ArrowUpDown, PackageX } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { productos, categorias } from '../data/productos';
+import { productos as defaultProductos, categorias } from '../data/productos';
+import { obtenerProductos } from '../services/api';
 
 /**
  * Página de Catálogo de Productos de FERREWEB.
  * Permite explorar, filtrar por categorías, buscar en tiempo real
- * y ordenar el inventario completo de la ferretería.
+ * y ordenar el inventario completo consumido desde la API REST.
  */
 export default function Catalogo({ onAddToCart }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoriaParam = searchParams.get('categoria') || '';
 
+  // Lista de productos dinámica desde el backend
+  const [listaProductos, setListaProductos] = useState(defaultProductos);
+
   // Estados locales para filtrado y búsqueda
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categoriaParam);
   const [sortBy, setSortBy] = useState('relevance');
+
+  // Cargar productos del backend
+  useEffect(() => {
+    obtenerProductos().then((data) => {
+      if (data && data.length > 0) {
+        setListaProductos(data);
+      }
+    });
+  }, []);
 
   // Sincronizar parámetro de URL con la categoría seleccionada
   useEffect(() => {
@@ -40,7 +53,7 @@ export default function Catalogo({ onAddToCart }) {
 
   // Filtrado y ordenamiento de productos memoizado
   const productosFiltrados = useMemo(() => {
-    let result = [...productos];
+    let result = [...listaProductos];
 
     // 1. Filtrar por categoría
     if (selectedCategory) {
@@ -141,7 +154,7 @@ export default function Catalogo({ onAddToCart }) {
 
         {/* Contador de Resultados */}
         <div className="catalog-results-count">
-          Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{productos.length}</strong> productos disponibles
+          Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{listaProductos.length}</strong> productos disponibles
           {selectedCategory && <span> en la categoría <em>"{selectedCategory}"</em></span>}
           {searchTerm && <span> para la búsqueda <em>"{searchTerm}"</em></span>}
         </div>

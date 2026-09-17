@@ -1,359 +1,549 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const compression = require('compression');
-const helmet = require('helmet');
-const cors = require('cors');
-const session = require('express-session');
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { productos as defaultProducts } from './src/data/productos.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-// Middleware de seguridad y compresión
-app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
-}));
+// Middlewares requeridos
 app.use(cors());
-app.use(compression());
-
-// Sesiones
-app.use(session({
-    secret: 'ferreweb-secret-key-2024',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false } // En producción usar HTTPS
-}));
-
-// Middleware para parsear JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos estáticos
-app.use(express.static(path.join(__dirname, '.')));
+// Servir archivos estáticos del frontend en caso de ejecutar todo unificado
+app.use(express.static(path.join(__dirname, 'dist')));
 
-// Variables para almacenar órdenes (en producción usar base de datos)
-let orders = [];
-let payments = [];
-let users = []; // Almacenamiento temporal de usuarios
+// ==========================================================================
+// ESTADO EN MEMORIA (IN-MEMORY DATABASE)
+// ==========================================================================
+let usuarios = [
+  {
+    id: 1,
+    nombre: 'Administrador FerreWeb',
+    email: 'admin@ferreweb.com',
+    password: 'admin123',
+    telefono: '+57 300 123 4567',
+    rol: 'admin',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 2,
+    nombre: 'Cliente FerreWeb',
+    email: 'cliente@ferreweb.com',
+    password: 'cliente123',
+    telefono: '+57 310 987 6543',
+    rol: 'cliente',
+    createdAt: new Date().toISOString()
+  }
+];
 
-// ========================================
-// RUTAS API
-// ========================================
+// Clonar productos iniciales para permitir mutaciones dinámicas en memoria
+let productos = JSON.parse(JSON.stringify(defaultProducts));
+let ordenes = [];
 
-// Obtener productos
-app.get('/api/products', (req, res) => {
-    try {
-        const productsData = require('./data/products.json');
-        res.json(productsData);
-    } catch (error) {
-        console.error('Error leyendo productos:', error);
-        res.status(500).json({ error: 'Error al cargar productos' });
-    }
-});
-
-// Obtener proveedores
-app.get('/api/providers', (req, res) => {
-    try {
-        const providersData = require('./data/providers.json');
-        res.json(providersData);
-    } catch (error) {
-        console.error('Error leyendo proveedores:', error);
-        res.status(500).json({ error: 'Error al cargar proveedores' });
-    }
-});
-
-// Crear orden
-app.post('/api/orders', (req, res) => {
-    try {
-        const { items, customer, payment } = req.body;
-        
-        // Validar datos
-        if (!items || items.length === 0) {
-            return res.status(400).json({ error: 'Carrito vacío' });
-        }
-        
-        if (!customer || !payment) {
-            return res.status(400).json({ error: 'Datos incompletos' });
-        }
-        
-        // Crear orden
-        const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const order = {
-            orderId,
-            items,
-            customer,
-            payment,
-            total: items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            status: 'pending',
-            createdAt: new Date().toISOString()
-        };
-        
-        orders.push(order);
-        
-        // Guardar en archivo (simulado)
-        console.log('📋 Nueva orden creada:', orderId);
-        
-        res.json({
-            success: true,
-            orderId,
-            message: 'Orden creada exitosamente'
-        });
-    } catch (error) {
-        console.error('Error creando orden:', error);
-        res.status(500).json({ error: 'Error al crear orden' });
-    }
-});
-
-// Procesar pago
-app.post('/api/payments', (req, res) => {
-    try {
-        const { orderId, amount, method, cardData } = req.body;
-        
-        // Validar tarjeta (simulado)
-        if (method === 'credit') {
-            if (!cardData || !cardData.cardNumber) {
-                return res.status(400).json({ error: 'Datos de tarjeta inválidos' });
-            }
-            
-            // Validar Luhn (simulado)
-            const cardNumber = cardData.cardNumber.replace(/\s/g, '');
-            if (cardNumber.length !== 16) {
-                return res.status(400).json({ error: 'Número de tarjeta inválido' });
-            }
-        }
-        
-        const transactionId = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const payment = {
-            transactionId,
-            orderId,
-            amount,
-            method,
-            status: 'completed',
-            processedAt: new Date().toISOString()
-        };
-        
-        payments.push(payment);
-        
-        console.log('💳 Pago procesado:', transactionId);
-        
-        res.json({
-            success: true,
-            transactionId,
-            message: 'Pago procesado exitosamente'
-        });
-    } catch (error) {
-        console.error('Error procesando pago:', error);
-        res.status(500).json({ error: 'Error al procesar pago' });
-    }
-});
-
-// Obtener orden
-app.get('/api/orders/:orderId', (req, res) => {
-    const { orderId } = req.params;
-    const order = orders.find(o => o.orderId === orderId);
-    
-    if (!order) {
-        return res.status(404).json({ error: 'Orden no encontrada' });
-    }
-    
-    res.json(order);
-});
-
-// Obtener todas las órdenes (admin)
-app.get('/api/admin/orders', (req, res) => {
-    // En producción, validar autenticación
-    res.json({
-        totalOrders: orders.length,
-        orders: orders,
-        totalRevenue: orders.reduce((sum, o) => sum + o.total, 0)
-    });
-});
-
-// Buscar productos
-app.get('/api/search', (req, res) => {
-    try {
-        const { q } = req.query;
-        
-        if (!q) {
-            return res.status(400).json({ error: 'Consulta vacía' });
-        }
-        
-        const productsData = require('./data/products.json');
-        const results = productsData.products.filter(p =>
-            p.name.toLowerCase().includes(q.toLowerCase()) ||
-            p.description.toLowerCase().includes(q.toLowerCase()) ||
-            p.category.toLowerCase().includes(q.toLowerCase())
-        );
-        
-        res.json({
-            query: q,
-            count: results.length,
-            results
-        });
-    } catch (error) {
-        console.error('Error buscando:', error);
-        res.status(500).json({ error: 'Error en la búsqueda' });
-    }
-});
-
-// ========================================
+// ==========================================================================
 // RUTAS DE AUTENTICACIÓN
-// ========================================
+// ==========================================================================
 
-// Registro de usuario
-app.post('/api/auth/register', (req, res) => {
-    try {
-        const { name, email, password, phone } = req.body;
-        
-        // Validar datos
-        if (!name || !email || !password || !phone) {
-            return res.status(400).json({ message: 'Todos los campos son requeridos' });
-        }
-        
-        // Verificar si el usuario ya existe
-        const existingUser = users.find(u => u.email === email);
-        if (existingUser) {
-            return res.status(400).json({ message: 'El correo electrónico ya está registrado' });
-        }
-        
-        // Crear usuario (en producción hashear contraseña)
-        const user = {
-            id: users.length + 1,
-            name,
-            email,
-            password, // En producción: bcrypt.hashSync(password, 10)
-            phone,
-            createdAt: new Date().toISOString()
-        };
-        
-        users.push(user);
-        
-        console.log('👤 Nuevo usuario registrado:', email);
-        
-        res.json({
-            success: true,
-            message: 'Usuario registrado exitosamente'
-        });
-    } catch (error) {
-        console.error('Error registrando usuario:', error);
-        res.status(500).json({ message: 'Error al registrar usuario' });
+/**
+ * POST /api/registro
+ * Registra nuevos usuarios en memoria
+ */
+app.post('/api/registro', (req, res) => {
+  try {
+    const { nombre, email, password, telefono } = req.body;
+
+    if (!nombre || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nombre, correo electrónico y contraseña son obligatorios.'
+      });
     }
-});
 
-// Login de usuario
-app.post('/api/auth/login', (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        // Buscar usuario
-        const user = users.find(u => u.email === email);
-        
-        if (!user) {
-            return res.status(401).json({ message: 'Credenciales inválidas' });
-        }
-        
-        // Verificar contraseña (en producción usar bcrypt)
-        if (user.password !== password) {
-            return res.status(401).json({ message: 'Credenciales inválidas' });
-        }
-        
-        // Crear sesión
-        req.session.userId = user.id;
-        req.session.user = {
-            id: user.id,
-            name: user.name,
-            email: user.email
-        };
-        
-        console.log('🔐 Usuario inició sesión:', email);
-        
-        res.json({
-            success: true,
-            user: req.session.user,
-            message: 'Inicio de sesión exitoso'
-        });
-    } catch (error) {
-        console.error('Error en login:', error);
-        res.status(500).json({ message: 'Error al iniciar sesión' });
+    const emailNormalizado = email.trim().toLowerCase();
+
+    // Verificar existencia
+    const existe = usuarios.find((u) => u.email.toLowerCase() === emailNormalizado);
+    if (existe) {
+      return res.status(400).json({
+        success: false,
+        message: 'El correo electrónico ya está registrado.'
+      });
     }
-});
 
-// Logout
-app.post('/api/auth/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return res.status(500).json({ message: 'Error al cerrar sesión' });
-        }
-        res.json({ success: true, message: 'Sesión cerrada' });
+    const nuevoUsuario = {
+      id: usuarios.length + 1,
+      nombre: nombre.trim(),
+      email: emailNormalizado,
+      password: password,
+      telefono: telefono ? telefono.trim() : '',
+      rol: 'cliente',
+      createdAt: new Date().toISOString()
+    };
+
+    usuarios.push(nuevoUsuario);
+
+    console.log(`👤 [REGISTRO] Nuevo usuario registrado: ${nuevoUsuario.email} (${nuevoUsuario.nombre})`);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Usuario registrado exitosamente.',
+      user: {
+        id: nuevoUsuario.id,
+        nombre: nuevoUsuario.nombre,
+        email: nuevoUsuario.email,
+        telefono: nuevoUsuario.telefono,
+        rol: nuevoUsuario.rol
+      }
     });
+  } catch (error) {
+    console.error('Error en /api/registro:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno en el servidor al registrar usuario.',
+      error: error.message
+    });
+  }
 });
 
-// Obtener usuario actual
-app.get('/api/auth/me', (req, res) => {
-    if (req.session.user) {
-        res.json({ user: req.session.user });
+/**
+ * POST /api/login
+ * Valida credenciales.
+ * Si email === 'admin@ferreweb.com' y password === 'admin123', retorna rol 'admin';
+ * de lo contrario, rol 'cliente'.
+ */
+app.post('/api/login', (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Por favor ingresa correo y contraseña.'
+      });
+    }
+
+    const emailNormalizado = email.trim().toLowerCase();
+
+    // Verificación especial para Administrador oficial FerreWeb
+    if (emailNormalizado === 'admin@ferreweb.com' && password === 'admin123') {
+      console.log(`🔐 [LOGIN] Administrador autenticado: ${emailNormalizado}`);
+      return res.json({
+        success: true,
+        message: 'Inicio de sesión exitoso como Administrador.',
+        token: `jwt-admin-token-${Date.now()}`,
+        user: {
+          id: 1,
+          nombre: 'Administrador FerreWeb',
+          email: 'admin@ferreweb.com',
+          rol: 'admin'
+        }
+      });
+    }
+
+    // Verificación de usuarios registrados
+    const usuario = usuarios.find(
+      (u) => u.email.toLowerCase() === emailNormalizado && u.password === password
+    );
+
+    if (usuario) {
+      console.log(`🔐 [LOGIN] Usuario autenticado: ${usuario.email} [${usuario.rol}]`);
+      return res.json({
+        success: true,
+        message: `Bienvenido de nuevo, ${usuario.nombre}.`,
+        token: `jwt-client-token-${Date.now()}`,
+        user: {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          telefono: usuario.telefono,
+          rol: usuario.rol || 'cliente'
+        }
+      });
+    }
+
+    // Credenciales incorrectas
+    return res.status(401).json({
+      success: false,
+      message: 'Credenciales inválidas. Verifica tu correo y contraseña.'
+    });
+  } catch (error) {
+    console.error('Error en /api/login:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno en el servidor al iniciar sesión.',
+      error: error.message
+    });
+  }
+});
+
+// ==========================================================================
+// RUTAS DE PRODUCTOS (CATÁLOGO DINÁMICO)
+// ==========================================================================
+
+/**
+ * GET /api/productos
+ * Devuelve la lista dinámica de productos con precios regular y de oferta
+ */
+app.get('/api/productos', (req, res) => {
+  try {
+    const { categoria, enOferta, q } = req.query;
+    let resultado = [...productos];
+
+    if (categoria && categoria !== 'todas') {
+      resultado = resultado.filter(
+        (p) => p.categoria.toLowerCase() === categoria.toLowerCase()
+      );
+    }
+
+    if (enOferta === 'true') {
+      resultado = resultado.filter((p) => p.enOferta === true);
+    }
+
+    if (q) {
+      const termino = q.toLowerCase();
+      resultado = resultado.filter(
+        (p) =>
+          p.nombre.toLowerCase().includes(termino) ||
+          p.descripcion.toLowerCase().includes(termino) ||
+          p.categoria.toLowerCase().includes(termino)
+      );
+    }
+
+    return res.json(resultado);
+  } catch (error) {
+    console.error('Error en GET /api/productos:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al consultar productos.',
+      error: error.message
+    });
+  }
+});
+
+// Compatibilidad con GET /api/products
+app.get('/api/products', (req, res) => {
+  res.json({ products: productos });
+});
+
+/**
+ * GET /api/productos/:id
+ * Detalle de un producto individual
+ */
+app.get('/api/productos/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const producto = productos.find((p) => p.id === id);
+  if (!producto) {
+    return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+  }
+  return res.json(producto);
+});
+
+// ==========================================================================
+// RUTAS CRUD ADMIN DE PRODUCTOS
+// ==========================================================================
+
+/**
+ * POST /api/admin/productos
+ * Crear nuevo producto u oferta
+ */
+app.post('/api/admin/productos', (req, res) => {
+  try {
+    const {
+      nombre,
+      categoria,
+      precio,
+      precioAnterior,
+      enOferta,
+      descuento,
+      stock,
+      descripcion,
+      caracteristicas,
+      imagen,
+      tags
+    } = req.body;
+
+    if (!nombre || precio === undefined || precio === null) {
+      return res.status(400).json({
+        success: false,
+        message: 'El nombre y el precio del producto son obligatorios.'
+      });
+    }
+
+    const nuevoId = productos.length > 0 ? Math.max(...productos.map((p) => Number(p.id) || 0)) + 1 : 1;
+    const precioNum = Number(precio);
+    const estaEnOferta = Boolean(enOferta);
+    const descuentoNum = estaEnOferta ? (Number(descuento) || 10) : 0;
+    const precioReg = precioAnterior
+      ? Number(precioAnterior)
+      : (estaEnOferta ? Math.round(precioNum * (1 + descuentoNum / 100)) : null);
+
+    const nuevoProducto = {
+      id: nuevoId,
+      nombre: String(nombre).trim(),
+      categoria: categoria || 'Herramientas',
+      precio: precioNum,
+      precioAnterior: precioReg,
+      enOferta: estaEnOferta,
+      descuento: descuentoNum,
+      descripcion: descripcion || 'Suministro industrial con garantía de calidad FERREWEB.',
+      caracteristicas: Array.isArray(caracteristicas)
+        ? caracteristicas
+        : [
+            caracteristicas || 'Garantía oficial y certificado de calidad',
+            'Envío prioritario a toda Colombia'
+          ],
+      stock: Number(stock) >= 0 ? Number(stock) : 10,
+      rating: 5.0,
+      icono: '🔧',
+      imagen:
+        imagen ||
+        'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80',
+      tags: Array.isArray(tags) ? tags : [categoria ? categoria.toLowerCase() : 'herramientas', 'ferreteria']
+    };
+
+    productos.unshift(nuevoProducto);
+
+    console.log(`📦 [ADMIN] Producto creado: ID ${nuevoProducto.id} - ${nuevoProducto.nombre}`);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Producto creado exitosamente.',
+      producto: nuevoProducto
+    });
+  } catch (error) {
+    console.error('Error en POST /api/admin/productos:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al crear producto.',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Controlador de actualización de producto
+ * Soporta PUT /api/admin/productos/:id y PUT /api/admin/productos
+ */
+const manejarActualizacionProducto = (req, res) => {
+  try {
+    const id = Number(req.params.id || req.body.id);
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID de producto no proporcionado.' });
+    }
+
+    const index = productos.findIndex((p) => p.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: `Producto con ID ${id} no encontrado.` });
+    }
+
+    const actual = productos[index];
+    const {
+      nombre,
+      categoria,
+      precio,
+      precioAnterior,
+      enOferta,
+      descuento,
+      stock,
+      descripcion,
+      imagen
+    } = req.body;
+
+    const nuevoPrecio = precio !== undefined ? Number(precio) : actual.precio;
+    const nuevoEnOferta = enOferta !== undefined ? Boolean(enOferta) : actual.enOferta;
+    const nuevoDescuento = nuevoEnOferta
+      ? (descuento !== undefined ? Number(descuento) : (actual.descuento || 10))
+      : 0;
+
+    let nuevoPrecioAnterior = actual.precioAnterior;
+    if (precioAnterior !== undefined) {
+      nuevoPrecioAnterior = precioAnterior ? Number(precioAnterior) : null;
+    } else if (nuevoEnOferta && !actual.precioAnterior) {
+      nuevoPrecioAnterior = Math.round(nuevoPrecio * 1.15);
+    } else if (!nuevoEnOferta) {
+      nuevoPrecioAnterior = null;
+    }
+
+    productos[index] = {
+      ...actual,
+      nombre: nombre !== undefined ? String(nombre).trim() : actual.nombre,
+      categoria: categoria !== undefined ? categoria : actual.categoria,
+      precio: nuevoPrecio,
+      precioAnterior: nuevoPrecioAnterior,
+      enOferta: nuevoEnOferta,
+      descuento: nuevoDescuento,
+      stock: stock !== undefined ? Number(stock) : actual.stock,
+      descripcion: descripcion !== undefined ? descripcion : actual.descripcion,
+      imagen: imagen !== undefined ? imagen : actual.imagen
+    };
+
+    console.log(`✏️ [ADMIN] Producto actualizado: ID ${id} - ${productos[index].nombre} (Stock: ${productos[index].stock})`);
+
+    return res.json({
+      success: true,
+      message: 'Producto actualizado exitosamente.',
+      producto: productos[index]
+    });
+  } catch (error) {
+    console.error('Error al actualizar producto:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al actualizar producto.',
+      error: error.message
+    });
+  }
+};
+
+app.put('/api/admin/productos/:id', manejarActualizacionProducto);
+app.put('/api/admin/productos', manejarActualizacionProducto);
+
+/**
+ * Controlador de eliminación de producto
+ * Soporta DELETE /api/admin/productos/:id y DELETE /api/admin/productos
+ */
+const manejarEliminacionProducto = (req, res) => {
+  try {
+    const id = Number(req.params.id || req.body.id || req.query.id);
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID de producto no proporcionado.' });
+    }
+
+    const index = productos.findIndex((p) => p.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: `Producto con ID ${id} no encontrado.` });
+    }
+
+    const eliminado = productos.splice(index, 1)[0];
+    console.log(`🗑️ [ADMIN] Producto eliminado: ID ${id} - ${eliminado.nombre}`);
+
+    return res.json({
+      success: true,
+      message: `Producto "${eliminado.nombre}" eliminado exitosamente.`,
+      producto: eliminado
+    });
+  } catch (error) {
+    console.error('Error al eliminar producto:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al eliminar producto.',
+      error: error.message
+    });
+  }
+};
+
+app.delete('/api/admin/productos/:id', manejarEliminacionProducto);
+app.delete('/api/admin/productos', manejarEliminacionProducto);
+
+// ==========================================================================
+// PASARELA DE PAGO REAL (WOMPI / MERCADO PAGO CHECKOUT)
+// ==========================================================================
+
+/**
+ * POST /api/crear-pago
+ * Recibe la lista de compra y el total del carrito, generando un enlace de redirección
+ * hacia la pasarela de pago real (Wompi Checkout oficial de Bancolombia / Mercado Pago)
+ */
+app.post('/api/crear-pago', (req, res) => {
+  try {
+    const { items, total, customer } = req.body;
+
+    // Calcular total seguro en pesos
+    let totalCalculado = 0;
+    if (total && Number(total) > 0) {
+      totalCalculado = Number(total);
+    } else if (Array.isArray(items) && items.length > 0) {
+      totalCalculado = items.reduce(
+        (sum, item) => sum + Number(item.precio) * Number(item.cantidad || 1),
+        0
+      );
     } else {
-        res.status(401).json({ message: 'No autenticado' });
+      totalCalculado = 50000; // Valor base de prueba si no se especifica
     }
-});
 
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
+    // Costo de envío según política de FerreWeb (> $350.000 COP es gratis)
+    const envio = totalCalculado >= 350000 ? 0 : 12000;
+    const granTotal = totalCalculado + envio;
+    const totalEnCentavos = Math.round(granTotal * 100);
 
-// Rutas para página principal
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+    // Generar referencia única de orden
+    const referencia = `FERREWEB-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
-// Error 404
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Manejo de errores global
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({
-        error: 'Error del servidor',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Error interno'
-    });
-});
-
-// ========================================
-// INICIAR SERVIDOR
-// ========================================
-app.listen(PORT, () => {
-    console.log('\n🔨 =====================================');
-    console.log('🔨 FERREWEB - Servidor Iniciado');
-    console.log('🔨 =====================================');
-    console.log(`📌 URL: http://localhost:${PORT}`);
-    console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-    console.log('🔨 =====================================\n');
+    // Llave pública de prueba oficial de Wompi Checkout Colombia
+    const WOMPI_PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY || 'pub_test_Q5yDA9xoKdePiumAlhrbxDrfvRrUNKy1';
     
-    // Mostrar comandos disponibles
-    console.log('📋 Comandos disponibles:');
-    console.log('   GET  /api/products       - Obtener productos');
-    console.log('   GET  /api/providers      - Obtener proveedores');
-    console.log('   GET  /api/search?q=      - Buscar productos');
-    console.log('   POST /api/orders         - Crear nueva orden');
-    console.log('   POST /api/payments       - Procesar pago');
-    console.log('   GET  /api/health         - Ver estado del servidor\n');
+    // URL de retorno a la tienda (soporta HashRouter de Vite en localhost o GitHub Pages)
+    const urlRetorno = encodeURIComponent('http://localhost:5173/#/?pago=exitoso&ref=' + referencia);
+
+    // Enlace directo al Checkout oficial de Wompi (soporta Nequi, PSE, Tarjeta y Bancolombia)
+    const checkoutUrl = `https://checkout.wompi.co/p/?public-key=${WOMPI_PUBLIC_KEY}&currency=COP&amount-in-cents=${totalEnCentavos}&reference=${referencia}&redirect-url=${urlRetorno}`;
+
+    // Registrar orden en memoria
+    const nuevaOrden = {
+      referencia,
+      items: items || [],
+      subtotal: totalCalculado,
+      envio,
+      total: granTotal,
+      estado: 'pendiente_pago',
+      cliente: customer || { nombre: 'Cliente FerreWeb' },
+      createdAt: new Date().toISOString()
+    };
+    ordenes.push(nuevaOrden);
+
+    console.log(`💳 [PAGO] Pasarela generada para ${referencia} | Total: $${granTotal} COP (${totalEnCentavos} centavos)`);
+
+    return res.json({
+      success: true,
+      url: checkoutUrl,
+      referencia,
+      total: granTotal,
+      moneda: 'COP',
+      message: 'Redirección a pasarela de pago generada exitosamente.'
+    });
+  } catch (error) {
+    console.error('Error en /api/crear-pago:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al procesar la pasarela de pagos.',
+      error: error.message
+    });
+  }
 });
 
-// Manejo de cierre graceful
-process.on('SIGTERM', () => {
-    console.log('\n🛑 Señal SIGTERM recibida. Cerrando servidor...');
-    process.exit(0);
+// ==========================================================================
+// ESTADO Y SALUD DEL SERVIDOR
+// ==========================================================================
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    servicio: 'FERREWEB API REST',
+    tienda: 'FERREWEB Oficial Colombia',
+    puerto: PORT,
+    productosRegistrados: productos.length,
+    usuariosRegistrados: usuarios.length,
+    timestamp: new Date().toISOString()
+  });
 });
 
-process.on('SIGINT', () => {
-    console.log('\n🛑 Ctrl+C presionado. Cerrando servidor...');
-    process.exit(0);
+// Iniciar servidor Express en el puerto 5000
+app.listen(PORT, () => {
+  console.log('\n=============================================================');
+  console.log('🚀 FERREWEB - SERVIDOR BACKEND API REST ACTIVO');
+  console.log('=============================================================');
+  console.log(`📌 URL Base:         http://localhost:${PORT}`);
+  console.log(`📦 Catálogo:         GET    http://localhost:${PORT}/api/productos`);
+  console.log(`🔐 Iniciar Sesión:   POST   http://localhost:${PORT}/api/login`);
+  console.log(`👤 Registro:         POST   http://localhost:${PORT}/api/registro`);
+  console.log(`🛠️ Admin Productos:  CRUD   http://localhost:${PORT}/api/admin/productos`);
+  console.log(`💳 Pasarela Pagos:   POST   http://localhost:${PORT}/api/crear-pago`);
+  console.log(`🩺 Health Check:     GET    http://localhost:${PORT}/api/health`);
+  console.log('=============================================================\n');
 });
+
+export default app;
