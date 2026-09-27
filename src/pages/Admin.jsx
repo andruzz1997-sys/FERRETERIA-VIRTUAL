@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ShieldAlert, 
@@ -6,7 +6,6 @@ import {
   Edit3, 
   Trash2, 
   Package, 
-  Tag, 
   TrendingUp, 
   Check, 
   X, 
@@ -21,11 +20,21 @@ import {
   FileText,
   RefreshCw,
   DollarSign,
-  Clock,
   Phone,
   Mail,
   MapPin,
-  CheckCircle2
+  CheckCircle2,
+  Download,
+  Search,
+  Printer,
+  FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight,
+  MessageCircle,
+  Clock,
+  History,
+  Send,
+  Navigation
 } from 'lucide-react';
 import { 
   obtenerProductos, 
@@ -37,6 +46,8 @@ import {
   reabastecerProducto,
   obtenerTodosPedidosAdmin,
   actualizarEstadoPedido,
+  actualizarDespachoPedido,
+  obtenerMovimientosKardex,
   obtenerProveedores,
   crearProveedor,
   eliminarProveedor,
@@ -46,19 +57,26 @@ import {
 import { formatearPrecioCOP, categorias } from '../data/productos';
 
 /**
- * Consola de Administración Profesional (/admin)
+ * Consola de Administración Profesional (/admin) - FERREWEB ERP
  * Estructurada en 6 pestañas industriales:
- * 1. Dashboard (KPIs ejecutivos)
- * 2. Inventario (Catálogo y CRUD)
- * 3. Alertas de Stock (Existencias <= 5 y reabastecimiento en lote)
- * 4. Pedidos / Logística (OMS y cambio interactivo de estado)
+ * 1. Dashboard (KPIs ejecutivos y estado de servicios)
+ * 2. Inventario (Catálogo, filtros, paginación, CSV y CRUD seguro)
+ * 3. Alertas de Stock (Existencias <= 5, reabastecimiento en lote y Kardex de Bodega)
+ * 4. Pedidos / Logística (OMS, asignación de guías, transportadoras y remisión imprimible)
  * 5. Proveedores (SCM y distribuidores aliados)
- * 6. Cotizaciones B2B (Constructores e instaladores)
+ * 6. Cotizaciones B2B (Constructores, WhatsApp y contacto directo)
  * Evidencia: SENA GA7-220501096-AA5-EV03
  */
 export default function Admin({ currentUser, onOpenAuthModal }) {
-  // Pestaña activa
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Pestaña activa persistente en localStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('ferreweb_admin_tab') || 'dashboard';
+  });
+
+  const cambiarPestana = (tab) => {
+    setActiveTab(tab);
+    localStorage.setItem('ferreweb_admin_tab', tab);
+  };
 
   // Estados de datos
   const [productos, setProductos] = useState([]);
@@ -67,10 +85,17 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
   const [pedidos, setPedidos] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
+  const [kardex, setKardex] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState(null);
   const [error, setError] = useState(null);
+
+  // Filtros y paginación para Inventario
+  const [searchInventario, setSearchInventario] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('todas');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const itemsPorPagina = 10;
 
   // Modal de Producto (Crear / Editar)
   const [modalProductoAbierto, setModalProductoAbierto] = useState(false);
@@ -85,6 +110,23 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
   const [formImagen, setFormImagen] = useState('');
   const [formDescripcion, setFormDescripcion] = useState('');
 
+  // Modal Confirmación de Eliminación de Producto
+  const [productoAEliminar, setProductoAEliminar] = useState(null);
+
+  // Modal de Reabastecimiento Personalizado
+  const [productoReabastecer, setProductoReabastecer] = useState(null);
+  const [cantidadReabastecer, setCantidadReabastecer] = useState(20);
+  const [motivoReabastecer, setMotivoReabastecer] = useState('Factura de compra de proveedor');
+
+  // Modal de Despacho Logístico
+  const [pedidoDespacho, setPedidoDespacho] = useState(null);
+  const [transportadoraSel, setTransportadoraSel] = useState('Coordinadora');
+  const [numeroGuiaInput, setNumeroGuiaInput] = useState('');
+  const [notasDespachoInput, setNotasDespachoInput] = useState('');
+
+  // Modal de Remisión Imprimible de Bodega
+  const [pedidoRemision, setPedidoRemision] = useState(null);
+
   // Modal de Proveedor
   const [modalProveedorAbierto, setModalProveedorAbierto] = useState(false);
   const [provNombre, setProvNombre] = useState('');
@@ -96,7 +138,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
 
   const mostrarMensaje = (txt) => {
     setMensaje(txt);
-    setTimeout(() => setMensaje(null), 3500);
+    setTimeout(() => setMensaje(null), 3800);
   };
 
   // Cargar todos los subsistemas del backend
@@ -104,13 +146,14 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
     setLoading(true);
     setError(null);
     try {
-      const [prodsData, metricasData, alertasData, pedidosData, provsData, cotsData] = await Promise.all([
+      const [prodsData, metricasData, alertasData, pedidosData, provsData, cotsData, kardexData] = await Promise.all([
         obtenerProductos(),
         obtenerMetricasDashboard(),
         obtenerAlertasStock(5),
         obtenerTodosPedidosAdmin(),
         obtenerProveedores(),
-        obtenerCotizacionesAdmin()
+        obtenerCotizacionesAdmin(),
+        obtenerMovimientosKardex()
       ]);
 
       setProductos(prodsData);
@@ -119,6 +162,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
       setPedidos(pedidosData);
       setProveedores(provsData);
       setCotizaciones(cotsData);
+      setKardex(kardexData.movimientos || []);
     } catch (err) {
       setError('Error al conectar con los servicios administrativos: ' + err.message);
     } finally {
@@ -188,21 +232,121 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
     }
   };
 
-  const handleEliminarProducto = async (id, nombre) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el producto "${nombre}" del catálogo?`)) return;
+  const handleEliminarProductoConfirmado = async () => {
+    if (!productoAEliminar) return;
     try {
-      await eliminarProductoAdmin(id);
-      mostrarMensaje(`Producto "${nombre}" eliminado.`);
+      await eliminarProductoAdmin(productoAEliminar.id);
+      mostrarMensaje(`Producto "${productoAEliminar.nombre}" eliminado del catálogo.`);
+      setProductoAEliminar(null);
       await cargarDatos();
     } catch (err) {
       setError('Error al eliminar: ' + err.message);
     }
   };
 
-  // --- REABASTECIMIENTO DE STOCK ---
-  const handleReabastecer = async (id, cantidad, nombre) => {
+  // --- FILTRADO Y PAGINACIÓN DE INVENTARIO ---
+  const productosFiltrados = useMemo(() => {
+    return productos.filter((p) => {
+      const cumpleCategoria = filtroCategoria === 'todas' || p.categoria === filtroCategoria;
+      const term = searchInventario.toLowerCase().trim();
+      const sku = `fw-${String(p.id).padStart(4, '0')}`.toLowerCase();
+      const cumpleBusqueda = !term || p.nombre.toLowerCase().includes(term) || sku.includes(term);
+      return cumpleCategoria && cumpleBusqueda;
+    });
+  }, [productos, filtroCategoria, searchInventario]);
+
+  const totalPaginas = Math.max(1, Math.ceil(productosFiltrados.length / itemsPorPagina));
+  const productosPaginados = useMemo(() => {
+    const inicio = (paginaActual - 1) * itemsPorPagina;
+    return productosFiltrados.slice(inicio, inicio + itemsPorPagina);
+  }, [productosFiltrados, paginaActual]);
+
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [searchInventario, filtroCategoria]);
+
+  // --- EXPORTACIÓN CSV DE INVENTARIO ---
+  const exportarInventarioCSV = () => {
     try {
-      await reabastecerProducto(id, cantidad);
+      const headers = ['SKU', 'Nombre', 'Categoria', 'Precio_COP', 'Stock_Actual', 'Estado'];
+      const rows = productosFiltrados.map((p) => [
+        `FW-${String(p.id).padStart(4, '0')}`,
+        `"${p.nombre.replace(/"/g, '""')}"`,
+        `"${p.categoria}"`,
+        p.precio,
+        p.stock,
+        p.stock === 0 ? 'AGOTADO' : p.stock <= 5 ? 'CRITICO' : 'NORMAL'
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const fecha = new Date().toISOString().slice(0, 10);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `inventario_ferreweb_${fecha}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      mostrarMensaje(`Exportados ${productosFiltrados.length} productos a CSV.`);
+    } catch (err) {
+      setError('Error al exportar inventario: ' + err.message);
+    }
+  };
+
+  // --- EXPORTACIÓN CSV DE PEDIDOS ---
+  const exportarPedidosCSV = () => {
+    try {
+      const headers = [
+        'Referencia',
+        'Fecha',
+        'Cliente_Nombre',
+        'Cliente_Email',
+        'Cliente_Telefono',
+        'Direccion_Envio',
+        'Ciudad',
+        'Total_COP',
+        'Metodo_Pago',
+        'Estado_Logistico',
+        'Transportadora',
+        'Numero_Guia'
+      ];
+
+      const rows = pedidos.map((o) => [
+        o.referencia,
+        o.fecha ? new Date(o.fecha).toLocaleString('es-CO') : 'N/A',
+        `"${(o.cliente?.nombre || 'Consumidor').replace(/"/g, '""')}"`,
+        `"${o.cliente?.email || 'N/A'}"`,
+        `"${o.cliente?.telefono || 'N/A'}"`,
+        `"${(o.direccionEnvio?.direccion || 'N/A').replace(/"/g, '""')}"`,
+        `"${o.direccionEnvio?.ciudad || 'Colombia'}"`,
+        o.total,
+        `"${o.metodoPago || 'Wompi'}"`,
+        o.estado,
+        `"${o.transportadora || 'Sin Asignar'}"`,
+        `"${o.numeroGuia || 'N/A'}"`
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const fecha = new Date().toISOString().slice(0, 10);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `pedidos_ferreweb_${fecha}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      mostrarMensaje(`Exportados ${pedidos.length} pedidos a CSV.`);
+    } catch (err) {
+      setError('Error al exportar pedidos: ' + err.message);
+    }
+  };
+
+  // --- REABASTECIMIENTO DE STOCK ---
+  const handleReabastecer = async (id, cantidad, nombre, motivo = 'Reabastecimiento rápido de almacén') => {
+    try {
+      await reabastecerProducto(id, cantidad, motivo);
       mostrarMensaje(`+${cantidad} unidades agregadas al stock de "${nombre}".`);
       await cargarDatos();
     } catch (err) {
@@ -210,7 +354,20 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
     }
   };
 
-  // --- CAMBIO DE ESTADO DE PEDIDOS ---
+  const handleGuardarReabastecimientoCustom = async (e) => {
+    e.preventDefault();
+    if (!productoReabastecer) return;
+    try {
+      await reabastecerProducto(productoReabastecer.id, Number(cantidadReabastecer), motivoReabastecer);
+      mostrarMensaje(`+${cantidadReabastecer} unidades añadidas a "${productoReabastecer.nombre}" (Kardex actualizado).`);
+      setProductoReabastecer(null);
+      await cargarDatos();
+    } catch (err) {
+      setError('Error en reabastecimiento: ' + err.message);
+    }
+  };
+
+  // --- CAMBIO DE ESTADO Y DESPACHO DE PEDIDOS ---
   const handleCambiarEstadoPedido = async (referencia, nuevoEstado) => {
     try {
       await actualizarEstadoPedido(referencia, nuevoEstado);
@@ -220,6 +377,31 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
       );
     } catch (err) {
       setError('Error actualizando pedido: ' + err.message);
+    }
+  };
+
+  const handleAbrirModalDespacho = (pedido) => {
+    setPedidoDespacho(pedido);
+    setTransportadoraSel(pedido.transportadora || 'Coordinadora');
+    setNumeroGuiaInput(pedido.numeroGuia || `CR-${Math.floor(10000000 + Math.random() * 90000000)}`);
+    setNotasDespachoInput(pedido.notasDespacho || 'Embalaje industrial con precinto de seguridad FerreWeb.');
+  };
+
+  const handleConfirmarDespacho = async (e) => {
+    e.preventDefault();
+    if (!pedidoDespacho) return;
+    try {
+      await actualizarDespachoPedido(pedidoDespacho.referencia, {
+        nuevoEstado: 'despachado',
+        transportadora: transportadoraSel,
+        numeroGuia: numeroGuiaInput.trim(),
+        notasDespacho: notasDespachoInput.trim()
+      });
+      mostrarMensaje(`Pedido ${pedidoDespacho.referencia} despachado vía ${transportadoraSel} (Guía: ${numeroGuiaInput}).`);
+      setPedidoDespacho(null);
+      await cargarDatos();
+    } catch (err) {
+      setError('Error al registrar despacho: ' + err.message);
     }
   };
 
@@ -289,7 +471,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
             Consola Protegida de Administración
           </h2>
           <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px', lineHeight: '1.5' }}>
-            Esta sección requiere credenciales con rol <strong>admin</strong> para auditar servicios web, inventario y pasarelas de pago.
+            Esta sección requiere credenciales con rol <strong>admin</strong> para auditar servicios web, inventario, logística y órdenes de compra.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
@@ -382,26 +564,26 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
         </div>
       )}
 
-      {/* Barra de Pestañas Industriales */}
+      {/* Barra de Pestañas Industriales con Persistencia */}
       <div className="industrial-tabs" role="tablist">
         <button
           type="button"
           className={`industrial-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
+          onClick={() => cambiarPestana('dashboard')}
         >
           <LayoutDashboard size={18} /> Dashboard (KPIs)
         </button>
         <button
           type="button"
           className={`industrial-tab ${activeTab === 'inventario' ? 'active' : ''}`}
-          onClick={() => setActiveTab('inventario')}
+          onClick={() => cambiarPestana('inventario')}
         >
           <Boxes size={18} /> Inventario ({productos.length})
         </button>
         <button
           type="button"
           className={`industrial-tab ${activeTab === 'alertas' ? 'active' : ''}`}
-          onClick={() => setActiveTab('alertas')}
+          onClick={() => cambiarPestana('alertas')}
         >
           <AlertTriangle size={18} color={alertasStock.length > 0 ? 'var(--color-danger)' : 'inherit'} />
           Alertas de Stock
@@ -414,21 +596,21 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
         <button
           type="button"
           className={`industrial-tab ${activeTab === 'pedidos' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pedidos')}
+          onClick={() => cambiarPestana('pedidos')}
         >
           <Truck size={18} /> Pedidos & Logística ({pedidos.length})
         </button>
         <button
           type="button"
           className={`industrial-tab ${activeTab === 'proveedores' ? 'active' : ''}`}
-          onClick={() => setActiveTab('proveedores')}
+          onClick={() => cambiarPestana('proveedores')}
         >
           <Building2 size={18} /> Proveedores SCM ({proveedores.length})
         </button>
         <button
           type="button"
           className={`industrial-tab ${activeTab === 'cotizaciones' ? 'active' : ''}`}
-          onClick={() => setActiveTab('cotizaciones')}
+          onClick={() => cambiarPestana('cotizaciones')}
         >
           <FileText size={18} /> Cotizaciones B2B ({cotizaciones.length})
         </button>
@@ -520,282 +702,588 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
       )}
 
       {/* ====================================================================
-          PESTAÑA 2: INVENTARIO (CATÁLOGO CRUD)
+          PESTAÑA 2: INVENTARIO (CATÁLOGO CRUD + FILTROS + PAGINACIÓN + CSV)
           ==================================================================== */}
       {activeTab === 'inventario' && (
-        <div style={{
-          background: '#07261B',
-          borderRadius: '10px',
-          border: '1px solid var(--color-border)',
-          overflowX: 'auto',
-          boxShadow: 'var(--shadow-md)'
-        }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '750px' }}>
-            <thead>
-              <tr style={{ background: '#021B12', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                <th style={{ padding: '14px 16px' }}>Producto</th>
-                <th style={{ padding: '14px 16px' }}>Categoría</th>
-                <th style={{ padding: '14px 16px' }}>Precio Venta (COP)</th>
-                <th style={{ padding: '14px 16px' }}>Stock</th>
-                <th style={{ padding: '14px 16px' }}>Estado</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productos.map((p) => (
-                <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img
-                        src={p.imagen}
-                        alt={p.nombre}
-                        style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px' }}
-                      />
-                      <div>
-                        <div style={{ fontWeight: '700', fontSize: '0.92rem' }}>{p.nombre}</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>SKU: FW-{String(p.id).padStart(4, '0')}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
-                    <span style={{ background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: '4px' }}>
-                      {p.categoria}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}>
-                    {formatearPrecioCOP(p.precio)}
-                  </td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700' }}>
-                    {p.stock} uds
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    {p.stock === 0 ? (
-                      <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>
-                        AGOTADO
-                      </span>
-                    ) : p.stock <= 5 ? (
-                      <span style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--color-warning)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>
-                        CRÍTICO ({p.stock})
-                      </span>
-                    ) : (
-                      <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: 'var(--color-secondary)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>
-                        NORMAL
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleEditarProducto(p)}
-                        title="Editar Producto"
-                        style={{
-                          background: 'rgba(250, 204, 21, 0.1)',
-                          border: '1px solid var(--color-accent)',
-                          color: 'var(--color-accent)',
-                          padding: '6px 10px',
-                          borderRadius: '6px'
-                        }}
-                      >
-                        <Edit3 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleEliminarProducto(p.id, p.nombre)}
-                        title="Eliminar Producto"
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          border: '1px solid var(--color-danger)',
-                          color: 'var(--color-danger)',
-                          padding: '6px 10px',
-                          borderRadius: '6px'
-                        }}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Barra de Filtros y Exportación */}
+          <div style={{
+            background: '#07261B',
+            padding: '16px 20px',
+            borderRadius: '10px',
+            border: '1px solid var(--color-border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '14px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', flex: '1 1 300px' }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
+                <Search size={16} color="var(--color-text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o SKU (FW-0001)..."
+                  value={searchInventario}
+                  onChange={(e) => setSearchInventario(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px 8px 36px',
+                    borderRadius: '6px',
+                    background: '#021B12',
+                    border: '1px solid var(--color-border)',
+                    color: '#fff',
+                    fontSize: '0.85rem'
+                  }}
+                />
+              </div>
 
-      {/* ====================================================================
-          PESTAÑA 3: ALERTAS DE STOCK (<= 5)
-          ==================================================================== */}
-      {activeTab === 'alertas' && (
-        <div style={{ background: '#07261B', borderRadius: '10px', border: '1px solid var(--color-border)', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h3 style={{ fontSize: '1.3rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-accent)' }}>
-                <AlertTriangle size={22} color="var(--color-accent)" />
-                Monitor de Existencias Críticas (Stock &le; 5)
-              </h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', margin: '4px 0 0' }}>
-                Reabastece directamente la bodega en lotes de 10, 20 o 50 unidades consumiendo <code>PATCH /api/admin/productos/:id/reabastecer</code>.
-              </p>
+              <select
+                value={filtroCategoria}
+                onChange={(e) => setFiltroCategoria(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  background: '#021B12',
+                  border: '1px solid var(--color-border)',
+                  color: '#fff',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <option value="todas">Todas las categorías</option>
+                {categorias.filter(c => c.id !== 'todas').map((c) => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={exportarInventarioCSV}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', fontSize: '0.85rem' }}
+                title="Descargar inventario en archivo CSV estructurado"
+              >
+                <Download size={16} /> Exportar CSV
+              </button>
             </div>
           </div>
 
-          {alertasStock.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-secondary)' }}>
-              <CheckCircle2 size={40} style={{ margin: '0 auto 10px' }} />
-              <h4>Inventario Saludable</h4>
-              <p style={{ color: 'var(--color-text-muted)' }}>No hay productos en nivel crítico de inventario en este momento.</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {alertasStock.map((prod) => (
-                <div
-                  key={prod.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '16px',
-                    background: '#021B12',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    flexWrap: 'wrap',
-                    gap: '12px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <img
-                      src={prod.imagen}
-                      alt={prod.nombre}
-                      style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px' }}
-                    />
-                    <div>
-                      <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem' }}>{prod.nombre}</h4>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                        Categoría: <strong>{prod.categoria}</strong> &middot; Precio: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)' }}>{formatearPrecioCOP(prod.precio)}</span>
-                      </div>
-                    </div>
-                  </div>
+          {/* Tabla de Productos */}
+          <div style={{
+            background: '#07261B',
+            borderRadius: '10px',
+            border: '1px solid var(--color-border)',
+            overflowX: 'auto',
+            boxShadow: 'var(--shadow-md)'
+          }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '780px' }}>
+              <thead>
+                <tr style={{ background: '#021B12', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '14px 16px' }}>Producto / SKU</th>
+                  <th style={{ padding: '14px 16px' }}>Categoría</th>
+                  <th style={{ padding: '14px 16px' }}>Precio Venta (COP)</th>
+                  <th style={{ padding: '14px 16px' }}>Stock</th>
+                  <th style={{ padding: '14px 16px' }}>Estado</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productosPaginados.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                      No se encontraron productos con los filtros aplicados.
+                    </td>
+                  </tr>
+                ) : (
+                  productosPaginados.map((p) => (
+                    <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <img
+                            src={p.imagen}
+                            alt={p.nombre}
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px' }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: '700', fontSize: '0.92rem' }}>{p.nombre}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>SKU: FW-{String(p.id).padStart(4, '0')}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
+                        <span style={{ background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: '4px' }}>
+                          {p.categoria}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}>
+                        {formatearPrecioCOP(p.precio)}
+                      </td>
+                      <td style={{ padding: '14px 16px', fontWeight: '700' }}>
+                        {p.stock} uds
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        {p.stock === 0 ? (
+                          <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>
+                            AGOTADO
+                          </span>
+                        ) : p.stock <= 5 ? (
+                          <span style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--color-warning)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>
+                            CRÍTICO ({p.stock})
+                          </span>
+                        ) : (
+                          <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: 'var(--color-secondary)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>
+                            NORMAL
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleEditarProducto(p)}
+                            title="Editar Producto"
+                            style={{
+                              background: 'rgba(250, 204, 21, 0.1)',
+                              border: '1px solid var(--color-accent)',
+                              color: 'var(--color-accent)',
+                              padding: '6px 10px',
+                              borderRadius: '6px'
+                            }}
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProductoAEliminar(p)}
+                            title="Eliminar Producto"
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid var(--color-danger)',
+                              color: 'var(--color-danger)',
+                              padding: '6px 10px',
+                              borderRadius: '6px'
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>Existencias:</div>
-                      <span style={{
-                        fontSize: '1.1rem',
-                        fontWeight: '800',
-                        color: prod.stockActual === 0 ? 'var(--color-danger)' : 'var(--color-warning)'
-                      }}>
-                        {prod.stockActual} unidades
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.82rem' }}
-                        onClick={() => handleReabastecer(prod.id, 10, prod.nombre)}
-                      >
-                        +10 Uds
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.82rem' }}
-                        onClick={() => handleReabastecer(prod.id, 20, prod.nombre)}
-                      >
-                        +20 Uds
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        style={{ padding: '6px 12px', fontSize: '0.82rem' }}
-                        onClick={() => handleReabastecer(prod.id, 50, prod.nombre)}
-                      >
-                        +50 Uds
-                      </button>
-                    </div>
-                  </div>
+            {/* Paginación */}
+            {productosFiltrados.length > itemsPorPagina && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px 20px',
+                background: '#021B12',
+                borderTop: '1px solid var(--color-border)',
+                fontSize: '0.85rem',
+                color: 'var(--color-text-muted)'
+              }}>
+                <div>
+                  Mostrando <strong>{(paginaActual - 1) * itemsPorPagina + 1} - {Math.min(paginaActual * itemsPorPagina, productosFiltrados.length)}</strong> de <strong>{productosFiltrados.length}</strong> productos
                 </div>
-              ))}
-            </div>
-          )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    disabled={paginaActual === 1}
+                    onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid var(--color-border)',
+                      color: paginaActual === 1 ? 'rgba(255,255,255,0.3)' : '#fff',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: paginaActual === 1 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <ChevronLeft size={16} /> Anterior
+                  </button>
+                  <span style={{ padding: '0 6px', fontWeight: '700', color: 'var(--color-secondary)' }}>
+                    {paginaActual} / {totalPaginas}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={paginaActual === totalPaginas}
+                    onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid var(--color-border)',
+                      color: paginaActual === totalPaginas ? 'rgba(255,255,255,0.3)' : '#fff',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: paginaActual === totalPaginas ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Siguiente <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* ====================================================================
-          PESTAÑA 4: PEDIDOS / LOGÍSTICA (OMS)
+          PESTAÑA 3: ALERTAS DE STOCK (<= 5) + KARDEX HISTORIAL
+          ==================================================================== */}
+      {activeTab === 'alertas' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Monitor de Stock Crítico */}
+          <div style={{ background: '#07261B', borderRadius: '10px', border: '1px solid var(--color-border)', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.3rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-accent)' }}>
+                  <AlertTriangle size={22} color="var(--color-accent)" />
+                  Monitor de Existencias Críticas (Stock &le; 5)
+                </h3>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', margin: '4px 0 0' }}>
+                  Reabastece directamente la bodega en lotes predefinidos o personalizados y registra el movimiento en el Kardex.
+                </p>
+              </div>
+            </div>
+
+            {alertasStock.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-secondary)' }}>
+                <CheckCircle2 size={40} style={{ margin: '0 auto 10px' }} />
+                <h4>Inventario Saludable</h4>
+                <p style={{ color: 'var(--color-text-muted)' }}>No hay productos en nivel crítico de inventario en este momento.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {alertasStock.map((prod) => (
+                  <div
+                    key={prod.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '16px',
+                      background: '#021B12',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      flexWrap: 'wrap',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <img
+                        src={prod.imagen}
+                        alt={prod.nombre}
+                        style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px' }}
+                      />
+                      <div>
+                        <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem' }}>{prod.nombre}</h4>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                          Categoría: <strong>{prod.categoria}</strong> &middot; Precio: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)' }}>{formatearPrecioCOP(prod.precio)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>Existencias:</div>
+                        <span style={{
+                          fontSize: '1.1rem',
+                          fontWeight: '800',
+                          color: prod.stockActual === 0 ? 'var(--color-danger)' : 'var(--color-warning)'
+                        }}>
+                          {prod.stockActual} unidades
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 10px', fontSize: '0.82rem' }}
+                          onClick={() => handleReabastecer(prod.id, 10, prod.nombre, 'Reabastecimiento express +10')}
+                        >
+                          +10 Uds
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 10px', fontSize: '0.82rem' }}
+                          onClick={() => handleReabastecer(prod.id, 25, prod.nombre, 'Reabastecimiento express +25')}
+                        >
+                          +25 Uds
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 10px', fontSize: '0.82rem' }}
+                          onClick={() => handleReabastecer(prod.id, 50, prod.nombre, 'Reabastecimiento express +50')}
+                        >
+                          +50 Uds
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          style={{ padding: '6px 10px', fontSize: '0.82rem' }}
+                          onClick={() => {
+                            setProductoReabastecer(prod);
+                            setCantidadReabastecer(20);
+                            setMotivoReabastecer('Factura de compra de proveedor aliando');
+                          }}
+                        >
+                          Personalizado...
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Historial de Movimientos Kardex */}
+          <div style={{ background: '#07261B', borderRadius: '10px', border: '1px solid var(--color-border)', padding: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <History size={20} color="var(--color-secondary)" />
+              <h3 style={{ fontSize: '1.2rem', margin: 0 }}>Historial de Movimientos de Kardex (Bodega)</h3>
+            </div>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>
+              Auditoría cronológica de ingresos y egresos de mercancía con registro de justificación y trazabilidad.
+            </p>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                <thead>
+                  <tr style={{ background: '#021B12', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '12px 14px' }}>Fecha y Hora</th>
+                    <th style={{ padding: '12px 14px' }}>Tipo</th>
+                    <th style={{ padding: '12px 14px' }}>Producto</th>
+                    <th style={{ padding: '12px 14px' }}>Cantidad</th>
+                    <th style={{ padding: '12px 14px' }}>Motivo / Justificación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {kardex.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                        No hay movimientos de inventario registrados en esta sesión.
+                      </td>
+                    </tr>
+                  ) : (
+                    kardex.slice(-15).reverse().map((mov) => (
+                      <tr key={mov.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '12px 14px', fontSize: '0.82rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)' }}>
+                          {new Date(mov.fecha).toLocaleString('es-CO')}
+                        </td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <span style={{
+                            background: mov.tipo === 'ENTRADA' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: mov.tipo === 'ENTRADA' ? 'var(--color-secondary)' : 'var(--color-danger)',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            fontWeight: '700'
+                          }}>
+                            {mov.tipo}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 14px', fontWeight: '600', fontSize: '0.88rem' }}>
+                          {mov.productoNombre} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>(ID #{mov.productoId})</span>
+                        </td>
+                        <td style={{ padding: '12px 14px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: mov.tipo === 'ENTRADA' ? 'var(--color-secondary)' : 'var(--color-danger)' }}>
+                          {mov.tipo === 'ENTRADA' ? `+${mov.cantidad}` : `-${mov.cantidad}`} uds
+                        </td>
+                        <td style={{ padding: '12px 14px', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                          {mov.motivo}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          PESTAÑA 4: PEDIDOS / LOGÍSTICA (OMS + DESPACHOS + REMISIÓN)
           ==================================================================== */}
       {activeTab === 'pedidos' && (
-        <div style={{
-          background: '#07261B',
-          borderRadius: '10px',
-          border: '1px solid var(--color-border)',
-          overflowX: 'auto',
-          boxShadow: 'var(--shadow-md)'
-        }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '780px' }}>
-            <thead>
-              <tr style={{ background: '#021B12', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                <th style={{ padding: '14px 16px' }}>Referencia</th>
-                <th style={{ padding: '14px 16px' }}>Cliente</th>
-                <th style={{ padding: '14px 16px' }}>Total COP</th>
-                <th style={{ padding: '14px 16px' }}>Medio de Pago</th>
-                <th style={{ padding: '14px 16px' }}>Estado Logístico</th>
-                <th style={{ padding: '14px 16px' }}>Destino</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pedidos.length === 0 ? (
-                <tr>
-                  <td colSpan="6" style={{ padding: '30px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                    No hay pedidos registrados en el sistema.
-                  </td>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Barra Superior con Exportar CSV */}
+          <div style={{
+            background: '#07261B',
+            padding: '16px 20px',
+            borderRadius: '10px',
+            border: '1px solid var(--color-border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', margin: 0 }}>Gestión de Pedidos & Despachos de Bodega</h3>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.82rem', margin: '2px 0 0' }}>
+                Monitoreo de órdenes de compra, vinculación con transportadoras reales e impresión de remisiones.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={exportarPedidosCSV}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+            >
+              <Download size={16} /> Exportar Reporte de Ventas (CSV)
+            </button>
+          </div>
+
+          {/* Tabla de Órdenes */}
+          <div style={{
+            background: '#07261B',
+            borderRadius: '10px',
+            border: '1px solid var(--color-border)',
+            overflowX: 'auto',
+            boxShadow: 'var(--shadow-md)'
+          }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
+              <thead>
+                <tr style={{ background: '#021B12', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '14px 16px' }}>Referencia</th>
+                  <th style={{ padding: '14px 16px' }}>Cliente / Destino</th>
+                  <th style={{ padding: '14px 16px' }}>Total COP</th>
+                  <th style={{ padding: '14px 16px' }}>Estado Logístico</th>
+                  <th style={{ padding: '14px 16px' }}>Transportadora & Guía</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center' }}>Acciones</th>
                 </tr>
-              ) : (
-                pedidos.map((o) => (
-                  <tr key={o.referencia} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--color-accent)' }}>
-                      {o.referencia}
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: '0.88rem' }}>
-                      <div style={{ fontWeight: '600' }}>{o.cliente?.nombre || 'Cliente'}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{o.cliente?.email || 'N/A'}</div>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: 'var(--color-secondary)' }}>
-                      {formatearPrecioCOP(o.total)}
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: '0.82rem' }}>
-                      {o.metodoPago || 'Wompi'}
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <select
-                        value={o.estado}
-                        onChange={(e) => handleCambiarEstadoPedido(o.referencia, e.target.value)}
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '6px',
-                          backgroundColor: '#021B12',
-                          border: '1px solid var(--color-border)',
-                          color: o.estado === 'entregado' ? 'var(--color-secondary)' : (o.estado === 'en_preparacion' ? 'var(--color-accent)' : '#fff'),
-                          fontSize: '0.82rem',
-                          fontWeight: '600'
-                        }}
-                      >
-                        <option value="pendiente_pago">Pendiente Pago</option>
-                        <option value="en_preparacion">En Preparación</option>
-                        <option value="despachado">Despachado</option>
-                        <option value="entregado">Entregado</option>
-                        <option value="cancelado">Cancelado</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-                      {o.direccionEnvio?.ciudad || 'Colombia'}
+              </thead>
+              <tbody>
+                {pedidos.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                      No hay pedidos registrados en el sistema actualmente.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  pedidos.map((o) => (
+                    <tr key={o.referencia} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: '700' }}>
+                        {o.referencia}
+                        <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 'normal', fontFamily: 'var(--font-sans)', marginTop: '2px' }}>
+                          {o.fecha ? new Date(o.fecha).toLocaleDateString('es-CO') : 'Reciente'}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '0.88rem' }}>
+                        <div style={{ fontWeight: '600' }}>{o.cliente?.nombre || 'Cliente'}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{o.cliente?.email || 'N/A'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-dim)' }}>
+                          {o.direccionEnvio?.ciudad || 'Colombia'} &middot; {o.direccionEnvio?.direccion || ''}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: 'var(--color-secondary)' }}>
+                        {formatearPrecioCOP(o.total)}
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <select
+                          value={o.estado}
+                          onChange={(e) => handleCambiarEstadoPedido(o.referencia, e.target.value)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            backgroundColor: '#021B12',
+                            border: '1px solid var(--color-border)',
+                            color: o.estado === 'entregado' ? 'var(--color-secondary)' : (o.estado === 'despachado' ? 'var(--color-accent)' : '#fff'),
+                            fontSize: '0.82rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          <option value="pendiente_pago">Pendiente Pago</option>
+                          <option value="en_preparacion">En Preparación</option>
+                          <option value="despachado">Despachado</option>
+                          <option value="entregado">Entregado</option>
+                          <option value="cancelado">Cancelado</option>
+                        </select>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        {o.transportadora ? (
+                          <div>
+                            <span style={{
+                              background: 'rgba(185, 231, 105, 0.1)',
+                              color: 'var(--color-secondary)',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: '700'
+                            }}>
+                              {o.transportadora}
+                            </span>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', marginTop: '4px', color: '#fff' }}>
+                              Guía: <strong>{o.numeroGuia || 'N/A'}</strong>
+                            </div>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                            Sin despacho asignado
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleAbrirModalDespacho(o)}
+                            title="Gestionar Despacho y Transportadora"
+                            style={{
+                              background: 'rgba(255, 212, 59, 0.12)',
+                              border: '1px solid var(--color-accent)',
+                              color: 'var(--color-accent)',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.8rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Truck size={14} /> Despachar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPedidoRemision(o)}
+                            title="Ver e Imprimir Remisión de Bodega"
+                            style={{
+                              background: 'rgba(185, 231, 105, 0.12)',
+                              border: '1px solid var(--color-secondary)',
+                              color: 'var(--color-secondary)',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.8rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Printer size={14} /> Remisión
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -880,7 +1368,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
           overflowX: 'auto',
           boxShadow: 'var(--shadow-md)'
         }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '780px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '850px' }}>
             <thead>
               <tr style={{ background: '#021B12', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>
                 <th style={{ padding: '14px 16px' }}>Código</th>
@@ -888,52 +1376,96 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
                 <th style={{ padding: '14px 16px' }}>Contacto</th>
                 <th style={{ padding: '14px 16px' }}>Materiales Solicitados</th>
                 <th style={{ padding: '14px 16px' }}>Estado</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center' }}>Acción</th>
+                <th style={{ padding: '14px 16px', textAlign: 'center' }}>Acciones B2B</th>
               </tr>
             </thead>
             <tbody>
-              {cotizaciones.map((cot) => (
-                <tr key={cot.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', fontWeight: '700' }}>
-                    {cot.codigo}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontWeight: '700' }}>{cot.empresa}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>NIT: {cot.nit}</div>
-                  </td>
-                  <td style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
-                    <div>{cot.cliente}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{cot.telefono} &middot; {cot.email}</div>
-                  </td>
-                  <td style={{ padding: '14px 16px', fontSize: '0.85rem', maxWidth: '280px' }}>
-                    {cot.items}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      background: cot.estado === 'contactado' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(250, 204, 21, 0.15)',
-                      color: cot.estado === 'contactado' ? 'var(--color-secondary)' : 'var(--color-accent)',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.78rem',
-                      fontWeight: '700'
-                    }}>
-                      {cot.estado ? cot.estado.toUpperCase() : 'PENDIENTE'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    {cot.estado !== 'contactado' && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.78rem' }}
-                        onClick={() => handleMarcarCotizacionContactado(cot.id, cot.codigo)}
-                      >
-                        Marcar Contactado
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {cotizaciones.map((cot) => {
+                const telClean = cot.telefono ? cot.telefono.replace(/\D/g, '') : '';
+                const wsMsg = `Hola ${cot.cliente}, te saludamos de FERRETERÍA FERREWEB SAS. Recibimos tu solicitud de cotización ${cot.codigo} para la empresa ${cot.empresa}. Queremos presentarte nuestra propuesta para los materiales solicitados: ${cot.items?.slice(0, 80)}... ¿Podemos coordinar una llamada?`;
+                const wsUrl = `https://wa.me/57${telClean}?text=${encodeURIComponent(wsMsg)}`;
+                const mailSubject = `Cotización FerreWeb ${cot.codigo} - ${cot.empresa}`;
+                const mailBody = `Estimado(a) ${cot.cliente},\n\nLe contactamos desde FerreWeb respecto a su solicitud de cotización ${cot.codigo} para ${cot.empresa}.\n\nMateriales cotizados:\n${cot.items}\n\nQuedamos a su disposición.`;
+                const mailUrl = `mailto:${cot.email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+
+                return (
+                  <tr key={cot.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', fontWeight: '700' }}>
+                      {cot.codigo}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ fontWeight: '700' }}>{cot.empresa}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>NIT: {cot.nit}</div>
+                    </td>
+                    <td style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
+                      <div>{cot.cliente}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{cot.telefono} &middot; {cot.email}</div>
+                    </td>
+                    <td style={{ padding: '14px 16px', fontSize: '0.85rem', maxWidth: '280px' }}>
+                      {cot.items}
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{
+                        background: cot.estado === 'contactado' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(250, 204, 21, 0.15)',
+                        color: cot.estado === 'contactado' ? 'var(--color-secondary)' : 'var(--color-accent)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.78rem',
+                        fontWeight: '700'
+                      }}>
+                        {cot.estado ? cot.estado.toUpperCase() : 'PENDIENTE'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                        <a
+                          href={wsUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Contactar vía WhatsApp"
+                          style={{
+                            background: 'rgba(34, 197, 94, 0.15)',
+                            border: '1px solid var(--color-secondary)',
+                            color: 'var(--color-secondary)',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <MessageCircle size={15} />
+                        </a>
+                        <a
+                          href={mailUrl}
+                          title="Enviar Correo Electrónico"
+                          style={{
+                            background: 'rgba(255, 212, 59, 0.12)',
+                            border: '1px solid var(--color-accent)',
+                            color: 'var(--color-accent)',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <Mail size={15} />
+                        </a>
+                        {cot.estado !== 'contactado' && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '5px 8px', fontSize: '0.75rem' }}
+                            onClick={() => handleMarcarCotizacionContactado(cot.id, cot.codigo)}
+                            title="Marcar solicitud como atendida"
+                          >
+                            Atendido
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1002,7 +1534,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
                     border: '1px solid var(--color-border)',
                     color: '#fff'
                   }}
-                  placeholder="ej: Taladro Percutor 20V"
+                  placeholder="ej: Taladro Percutor 20V Industrial"
                 />
               </div>
 
@@ -1076,7 +1608,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '6px', color: 'var(--color-text-muted)' }}>
-                    Precio Anterior
+                    Precio Anterior (Opcional)
                   </label>
                   <input
                     type="number"
@@ -1091,7 +1623,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
                       border: '1px solid var(--color-border)',
                       color: '#fff'
                     }}
-                    placeholder="Opcional"
+                    placeholder="520000"
                   />
                 </div>
               </div>
@@ -1112,7 +1644,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
                     border: '1px solid var(--color-border)',
                     color: '#fff'
                   }}
-                  placeholder="https://..."
+                  placeholder="https://images.unsplash.com/..."
                 />
               </div>
 
@@ -1152,6 +1684,500 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL DE CONFIRMACIÓN DESTRUTIVA DE ELIMINACIÓN DE PRODUCTO
+          ==================================================================== */}
+      {productoAEliminar && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 5100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setProductoAEliminar(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: '#07261B',
+              borderRadius: '12px',
+              border: '1px solid var(--color-danger)',
+              padding: '24px',
+              boxShadow: '0 20px 40px rgba(255, 77, 77, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--color-danger)', marginBottom: '14px' }}>
+              <AlertTriangle size={28} />
+              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Eliminar Producto del Catálogo</h3>
+            </div>
+
+            <p style={{ color: '#E5E7EB', fontSize: '0.92rem', lineHeight: '1.5', marginBottom: '16px' }}>
+              ¿Estás seguro de que deseas eliminar permanentemente el producto <strong>"{productoAEliminar.nombre}"</strong>?
+            </p>
+
+            <div style={{ background: '#021B12', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '20px', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+              <div>SKU: <strong style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>FW-{String(productoAEliminar.id).padStart(4, '0')}</strong></div>
+              <div>Existencias actuales en bodega: <strong style={{ color: 'var(--color-accent)' }}>{productoAEliminar.stock} unidades</strong></div>
+              <div style={{ color: 'var(--color-danger)', marginTop: '4px' }}>⚠️ Esta acción retirará el ítem del catálogo público de inmediato.</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setProductoAEliminar(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleEliminarProductoConfirmado}
+                style={{
+                  background: 'var(--color-danger)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  fontSize: '0.88rem'
+                }}
+              >
+                Eliminar Definitivamente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL DE REABASTECIMIENTO PERSONALIZADO (KARDEX)
+          ==================================================================== */}
+      {productoReabastecer && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 5100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setProductoReabastecer(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              backgroundColor: '#07261B',
+              borderRadius: '12px',
+              border: '1px solid var(--color-border)',
+              padding: '24px',
+              boxShadow: 'var(--shadow-lg)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Boxes size={20} color="var(--color-secondary)" />
+                Reabastecimiento de Almacén
+              </h3>
+              <button
+                type="button"
+                onClick={() => setProductoReabastecer(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#021B12', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
+              <div style={{ fontWeight: '700', color: '#fff' }}>{productoReabastecer.nombre}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Stock actual: {productoReabastecer.stockActual || productoReabastecer.stock} uds</div>
+            </div>
+
+            <form onSubmit={handleGuardarReabastecimientoCustom}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '6px', color: 'var(--color-text-muted)' }}>
+                  Cantidad a Ingresar (Unidades) *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={cantidadReabastecer}
+                  onChange={(e) => setCantidadReabastecer(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: '#021B12',
+                    border: '1px solid var(--color-border)',
+                    color: '#fff'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '6px', color: 'var(--color-text-muted)' }}>
+                  Motivo / Soporte Contable *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={motivoReabastecer}
+                  onChange={(e) => setMotivoReabastecer(e.target.value)}
+                  placeholder="ej. Factura #9084 de Distribuidora Bosch"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: '#021B12',
+                    border: '1px solid var(--color-border)',
+                    color: '#fff'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setProductoReabastecer(null)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Plus size={16} /> Confirmar Ingreso
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL DE DESPACHO LOGÍSTICO (TRANSPORTADORA + GUÍA)
+          ==================================================================== */}
+      {pedidoDespacho && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 5100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setPedidoDespacho(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              backgroundColor: '#07261B',
+              borderRadius: '12px',
+              border: '1px solid var(--color-border)',
+              padding: '24px',
+              boxShadow: 'var(--shadow-lg)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Truck size={20} color="var(--color-accent)" />
+                Despacho Logístico de Mercancía
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPedidoDespacho(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ background: '#021B12', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '18px', fontSize: '0.85rem' }}>
+              <div>Orden: <strong style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}>{pedidoDespacho.referencia}</strong></div>
+              <div>Destinatario: <strong>{pedidoDespacho.cliente?.nombre}</strong> &middot; {pedidoDespacho.direccionEnvio?.ciudad}</div>
+              <div>Dirección: {pedidoDespacho.direccionEnvio?.direccion}</div>
+            </div>
+
+            <form onSubmit={handleConfirmarDespacho}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '6px', color: 'var(--color-text-muted)' }}>
+                  Transportadora Oficial *
+                </label>
+                <select
+                  value={transportadoraSel}
+                  onChange={(e) => setTransportadoraSel(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: '#021B12',
+                    border: '1px solid var(--color-border)',
+                    color: '#fff',
+                    fontWeight: '600'
+                  }}
+                >
+                  <option value="Coordinadora">Coordinadora Mercantil</option>
+                  <option value="Servientrega">Servientrega Logística</option>
+                  <option value="Envía">Envía Colvanes</option>
+                  <option value="Interrapidísimo">Interrapidísimo</option>
+                  <option value="Transporte Propio FerreWeb">Transporte Propio FerreWeb (Flota Urbana)</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '6px', color: 'var(--color-text-muted)' }}>
+                  Número de Guía de Rastreo *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={numeroGuiaInput}
+                  onChange={(e) => setNumeroGuiaInput(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: '#021B12',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-accent)',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: '700'
+                  }}
+                  placeholder="ej. CR-90412850"
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', marginBottom: '6px', color: 'var(--color-text-muted)' }}>
+                  Notas de Despacho / Precinto de Seguridad
+                </label>
+                <textarea
+                  rows="2"
+                  value={notasDespachoInput}
+                  onChange={(e) => setNotasDespachoInput(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: '#021B12',
+                    border: '1px solid var(--color-border)',
+                    color: '#fff'
+                  }}
+                ></textarea>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setPedidoDespacho(null)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Truck size={16} /> Confirmar Despacho
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL DE REMISIÓN IMPRIMIBLE DE BODEGA
+          ==================================================================== */}
+      {pedidoRemision && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 5200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            overflowY: 'auto'
+          }}
+          onClick={() => setPedidoRemision(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '860px',
+              backgroundColor: '#07261B',
+              borderRadius: '12px',
+              border: '1px solid var(--color-border)',
+              padding: '24px',
+              boxShadow: 'var(--shadow-lg)',
+              maxHeight: '94vh',
+              overflowY: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Barra de Controles Modal */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--color-border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Printer size={20} color="var(--color-secondary)" />
+                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Remisión de Bodega &middot; Orden {pedidoRemision.referencia}</h3>
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => window.print()}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+                >
+                  <Printer size={16} /> Imprimir Remisión
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setPedidoRemision(null)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Hoja de Remisión Estilizada para Pantalla e Impresión */}
+            <div className="remision-container remision-print-container">
+              <div className="remision-header">
+                <div>
+                  <div className="remision-company-name">FERRETERÍA INDUSTRIAL FERREWEB SAS</div>
+                  <div className="remision-company-info">
+                    NIT: 901.884.210-9 &middot; Régimen Común &middot; Grandes Superficies Ferreteras<br />
+                    Dirección: Parque Industrial San Carlos Bodega 14 &middot; Bogotá D.C., Colombia<br />
+                    PBX: (601) 745-8900 &middot; Línea de Bodega: +57 310 999 8877 &middot; soporte@ferreweb.com
+                  </div>
+                </div>
+                <div className="remision-doc-title">
+                  <div className="remision-badge">REMISIÓN DE DESPACHO</div>
+                  <div className="remision-ref">REF: {pedidoRemision.referencia}</div>
+                  <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px' }}>
+                    Fecha: {pedidoRemision.fecha ? new Date(pedidoRemision.fecha).toLocaleDateString('es-CO') : new Date().toLocaleDateString('es-CO')}
+                  </div>
+                </div>
+              </div>
+
+              <div className="remision-meta-grid">
+                <div className="remision-meta-block">
+                  <h4>Datos del Cliente & Entrega</h4>
+                  <p><strong>Destinatario:</strong> {pedidoRemision.cliente?.nombre || 'Cliente'}</p>
+                  <p><strong>Identificación:</strong> {pedidoRemision.cliente?.cedula || 'Consumidor Final'}</p>
+                  <p><strong>Dirección:</strong> {pedidoRemision.direccionEnvio?.direccion || 'Entrega en Bodega'}</p>
+                  <p><strong>Ciudad / Depto:</strong> {pedidoRemision.direccionEnvio?.ciudad || 'Bogotá D.C.'}</p>
+                  <p><strong>Teléfono:</strong> {pedidoRemision.cliente?.telefono || 'N/A'}</p>
+                </div>
+                <div className="remision-meta-block">
+                  <h4>Datos Logísticos & Despacho</h4>
+                  <p><strong>Operador Logístico:</strong> {pedidoRemision.transportadora || 'Transporte Propio FerreWeb'}</p>
+                  <p><strong>Número de Guía:</strong> <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700' }}>{pedidoRemision.numeroGuia || 'CR-PENDIENTE'}</span></p>
+                  <p><strong>Estado Operativo:</strong> {pedidoRemision.estado?.toUpperCase()}</p>
+                  <p><strong>Medio de Pago:</strong> {pedidoRemision.metodoPago || 'Wompi Integrado (Aprobado)'}</p>
+                  <p><strong>Notas:</strong> {pedidoRemision.notasDespacho || 'Embalaje sellado con cinta de seguridad.'}</p>
+                </div>
+              </div>
+
+              <table className="remision-table">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Descripción del Producto</th>
+                    <th style={{ textAlign: 'center' }}>Cantidad</th>
+                    <th style={{ textAlign: 'right' }}>Valor Unitario</th>
+                    <th style={{ textAlign: 'right' }}>Total (COP)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedidoRemision.items && pedidoRemision.items.length > 0 ? (
+                    pedidoRemision.items.map((item, idx) => (
+                      <tr key={idx}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
+                          FW-{String(item.id || idx + 1).padStart(4, '0')}
+                        </td>
+                        <td>
+                          <strong>{item.nombre}</strong>
+                        </td>
+                        <td style={{ textAlign: 'center', fontWeight: '700' }}>
+                          {item.cantidad}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
+                          {formatearPrecioCOP(item.precio)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: '700' }}>
+                          {formatearPrecioCOP(item.precio * item.cantidad)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '16px' }}>
+                        Detalle de ítems consolidado en la orden principal.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              <div className="remision-total-row">
+                <div>Subtotal Mercancía: <strong>{formatearPrecioCOP(pedidoRemision.total)}</strong></div>
+                <div>Costo de Envío: <strong>$0 (Bonificado)</strong></div>
+                <div style={{ fontSize: '15px', color: '#1F5A37' }}>
+                  Total Liquidado: <strong>{formatearPrecioCOP(pedidoRemision.total)}</strong>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '11px', color: '#4B5563', lineHeight: '1.4', background: '#F9FAFB', padding: '10px 14px', borderRadius: '4px', border: '1px solid #E5E7EB' }}>
+                <strong>CONDICIONES DE ENTREGA:</strong> El receptor declara haber revisado las cantidades, empaques y sellos de seguridad a entera satisfacción. Cualquier inconsistencia debe ser consignada en esta remisión antes de la firma. FerreWeb garantiza la originalidad y cumplimiento de normas técnicas ICONTEC en todos los productos suministrados.
+              </div>
+
+              <div className="remision-signatures">
+                <div className="remision-signature-box">
+                  <strong>DESPACHADO POR:</strong><br />
+                  Bodega Principal FerreWeb SAS<br />
+                  Firma Responsable Despacho: ___________________________<br />
+                  C.C. No. ________________________ Fecha: ____/____/________
+                </div>
+                <div className="remision-signature-box">
+                  <strong>RECIBIDO A CONFORMIDAD:</strong><br />
+                  Cliente / Conductor Transportadora<br />
+                  Nombre Legible: _______________________________________<br />
+                  C.C. / Sello: ___________________ Fecha: ____/____/________
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1215,6 +2241,7 @@ export default function Admin({ currentUser, onOpenAuthModal }) {
                     border: '1px solid var(--color-border)',
                     color: '#fff'
                   }}
+                  placeholder="ej. Distribuidora Bosch Colombia SAS"
                 />
               </div>
 

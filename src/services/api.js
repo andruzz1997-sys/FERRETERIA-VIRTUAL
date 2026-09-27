@@ -284,15 +284,16 @@ export async function obtenerTodosPedidosAdmin() {
 }
 
 /**
- * Actualizar estado de una orden
+ * Actualizar estado y despacho de una orden (OMS)
  * PATCH /api/admin/pedidos/:referencia/estado
  */
-export async function actualizarEstadoPedido(referencia, nuevoEstado) {
+export async function actualizarEstadoPedido(referencia, payload) {
   try {
+    const bodyData = typeof payload === 'string' ? { nuevoEstado: payload } : payload;
     const res = await fetch(`${API_URL}/admin/pedidos/${encodeURIComponent(referencia)}/estado`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nuevoEstado })
+      body: JSON.stringify(bodyData)
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Error al actualizar estado del pedido');
@@ -300,6 +301,41 @@ export async function actualizarEstadoPedido(referencia, nuevoEstado) {
   } catch (err) {
     console.error('Error en actualizarEstadoPedido:', err);
     throw err;
+  }
+}
+
+/**
+ * Actualizar despacho logístico con transportadora y número de guía
+ * PATCH /api/admin/pedidos/:referencia/estado
+ */
+export async function actualizarDespachoPedido(referencia, { nuevoEstado = 'despachado', transportadora, numeroGuia, notasDespacho = '' }) {
+  try {
+    const res = await fetch(`${API_URL}/admin/pedidos/${encodeURIComponent(referencia)}/estado`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nuevoEstado, transportadora, numeroGuia, notasDespacho })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Error al actualizar despacho del pedido');
+    return data;
+  } catch (err) {
+    console.error('Error en actualizarDespachoPedido:', err);
+    throw err;
+  }
+}
+
+/**
+ * Obtener historial de movimientos de inventario (Kardex)
+ * GET /api/admin/inventario/kardex
+ */
+export async function obtenerMovimientosKardex() {
+  try {
+    const res = await fetch(`${API_URL}/admin/inventario/kardex`);
+    const data = await res.json();
+    return data.movimientos || [];
+  } catch (err) {
+    console.warn('⚠️ Fallback movimientos kardex:', err.message);
+    return [];
   }
 }
 
@@ -401,15 +437,15 @@ export async function obtenerAlertasStock(umbral = 5) {
 }
 
 /**
- * Reabastecer stock de un producto
+ * Reabastecer stock de un producto con registro en Kardex
  * PATCH /api/admin/productos/:id/reabastecer
  */
-export async function reabastecerProducto(id, cantidad) {
+export async function reabastecerProducto(id, cantidad, motivo = 'Reabastecimiento de bodega central') {
   try {
     const res = await fetch(`${API_URL}/admin/productos/${id}/reabastecer`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cantidad })
+      body: JSON.stringify({ cantidad, motivo })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Error al reabastecer producto');

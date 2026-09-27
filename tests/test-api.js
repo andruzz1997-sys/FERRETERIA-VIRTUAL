@@ -250,7 +250,11 @@ const server = app.listen(PORT, async () => {
     });
     assert(cupon.status === 200 && cupon.body.valido === true && cupon.body.descuentoCalculado === 50000, 'POST /api/cupones/validar (Validar Descuento FERRE10)', cupon.status, 200);
 
-    // 29. Eliminar Producto Creado (Limpieza)
+    // 29. Kardex de Movimientos de Inventario
+    const kardex = await getJSON('/api/admin/inventario/kardex');
+    assert(kardex.status === 200 && Array.isArray(kardex.body.movimientos), 'GET /api/admin/inventario/kardex (Historial Movimientos Bodega)', kardex.status, 200);
+
+    // 30. Eliminar Producto Creado (Limpieza)
     const delProd = await deleteJSON(`/api/admin/productos/${prodId}`);
     assert(delProd.status === 200, 'DELETE /api/admin/productos/:id (Eliminar Producto)', delProd.status, 200);
 

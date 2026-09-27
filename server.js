@@ -50,7 +50,38 @@ let usuarios = [
 // Clonar productos iniciales para permitir mutaciones dinámicas en memoria
 let productos = JSON.parse(JSON.stringify(defaultProducts));
 
-// Órdenes iniciales de demostración
+// Historial de Movimientos de Bodega (Kardex Simplificado)
+let movimientosInventario = [
+  {
+    id: 1,
+    productoId: 1,
+    productoNombre: 'Taladro Inalámbrico 20V Profesional',
+    tipo: 'ENTRADA',
+    cantidad: 25,
+    motivo: 'Inventario inicial de apertura de bodega',
+    fecha: new Date(Date.now() - 86400000 * 5).toISOString()
+  },
+  {
+    id: 2,
+    productoId: 3,
+    productoNombre: 'Cemento Portland Tipo 1 50KG',
+    tipo: 'ENTRADA',
+    cantidad: 100,
+    motivo: 'Recepción despacho de fábrica Argos',
+    fecha: new Date(Date.now() - 86400000 * 3).toISOString()
+  },
+  {
+    id: 3,
+    productoId: 3,
+    productoNombre: 'Cemento Portland Tipo 1 50KG',
+    tipo: 'SALIDA',
+    cantidad: 5,
+    motivo: 'Venta orden FERREWEB-DEMO2',
+    fecha: new Date(Date.now() - 86400000).toISOString()
+  }
+];
+
+// Órdenes iniciales de demostración enriquecidas con logística y transportadoras
 let ordenes = [
   {
     referencia: 'FERREWEB-1711460000000-DEMO1',
@@ -62,6 +93,10 @@ let ordenes = [
     envio: 0,
     total: 540000,
     estado: 'entregado',
+    transportadora: 'Coordinadora',
+    numeroGuia: 'CRD-99881203',
+    fechaDespacho: new Date(Date.now() - 86400000 * 2).toISOString(),
+    notasDespacho: 'Entregado en portería de obra con acta firmada.',
     cliente: { id: 2, nombre: 'Cliente FerreWeb', email: 'cliente@ferreweb.com', telefono: '+57 310 987 6543' },
     direccionEnvio: { direccion: 'Cra 45 # 72-10', ciudad: 'Bogotá', departamento: 'Cundinamarca' },
     metodoPago: 'Wompi Bancolombia / PSE',
@@ -77,6 +112,10 @@ let ordenes = [
     envio: 12000,
     total: 172000,
     estado: 'despachado',
+    transportadora: 'Servientrega',
+    numeroGuia: 'SER-44910283',
+    fechaDespacho: new Date(Date.now() - 3600000 * 4).toISOString(),
+    notasDespacho: 'Despachado en camión NPR carga pesada.',
     cliente: { id: 2, nombre: 'Cliente FerreWeb', email: 'cliente@ferreweb.com', telefono: '+57 310 987 6543' },
     direccionEnvio: { direccion: 'Calle 100 # 15-20', ciudad: 'Medellín', departamento: 'Antioquia' },
     metodoPago: 'Wompi Nequi',
@@ -679,6 +718,10 @@ app.post('/api/crear-pago', (req, res) => {
       envio,
       total: granTotal,
       estado: 'pendiente_pago',
+      transportadora: null,
+      numeroGuia: null,
+      fechaDespacho: null,
+      notasDespacho: '',
       cliente: customer || { nombre: 'Cliente FerreWeb', email: 'cliente@ferreweb.com' },
       direccionEnvio: shippingAddress || { direccion: 'Sede Principal', ciudad: 'Bogotá' },
       metodoPago: 'Wompi Checkout Oficial',
@@ -848,25 +891,27 @@ app.get('/api/pedidos/rastreo/:referencia', (req, res) => {
 
   // Generar eventos cronológicos según estado
   const eventos = [
-    { estado: 'Orden recibida en sistema', fecha: orden.createdAt, completado: true }
+    { estado: 'Orden recibida en sistema y verificada', fecha: orden.createdAt, completado: true }
   ];
 
   if (orden.estado !== 'pendiente_pago' && orden.estado !== 'rechazado' && orden.estado !== 'cancelado') {
-    eventos.push({ estado: 'Pago aprobado y verificado', fecha: orden.createdAt, completado: true });
+    eventos.push({ estado: 'Pago aprobado y verificado por Wompi', fecha: orden.createdAt, completado: true });
     eventos.push({ estado: 'En preparación en bodega central', fecha: orden.createdAt, completado: true });
   }
 
   if (orden.estado === 'despachado' || orden.estado === 'entregado') {
+    const transp = orden.transportadora || 'Logística Exprés FerreWeb';
+    const guia = orden.numeroGuia || `FW-LOG-${orden.referencia.substring(orden.referencia.length - 6)}`;
     eventos.push({
-      estado: 'Despachado con Servientrega / Envía (Guía: ENV-774921)',
-      fecha: new Date(Date.now() - 3600000 * 5).toISOString(),
+      estado: `Despachado en camión de ruta con ${transp} (Guía: ${guia})`,
+      fecha: orden.fechaDespacho || new Date(Date.now() - 3600000 * 5).toISOString(),
       completado: true
     });
   }
 
   if (orden.estado === 'entregado') {
     eventos.push({
-      estado: 'Entregado al destinatario a satisfacción',
+      estado: 'Entregado al destinatario a satisfacción en obra',
       fecha: new Date().toISOString(),
       completado: true
     });
@@ -875,14 +920,23 @@ app.get('/api/pedidos/rastreo/:referencia', (req, res) => {
   return res.json({
     success: true,
     referencia: orden.referencia,
+    estado: orden.estado,
     estadoActual: orden.estado,
-    transportadora: 'Logística Exprés FerreWeb / Servientrega',
-    guia: `FW-LOG-${orden.referencia.substring(orden.referencia.length - 6)}`,
+    transportadora: orden.transportadora || 'Logística Exprés FerreWeb / Coordinadora',
+    numeroGuia: orden.numeroGuia || `FW-LOG-${orden.referencia.substring(orden.referencia.length - 6)}`,
+    guia: orden.numeroGuia || `FW-LOG-${orden.referencia.substring(orden.referencia.length - 6)}`,
+    fechaDespacho: orden.fechaDespacho || null,
+    notasDespacho: orden.notasDespacho || '',
     destino: orden.direccionEnvio?.ciudad || 'Colombia',
     direccion: orden.direccionEnvio?.direccion || 'Entrega a domicilio',
     fechaEstimada: '24 a 48 horas hábiles',
     items: orden.items,
     total: orden.total,
+    cliente: orden.cliente ? {
+      nombre: orden.cliente.nombre,
+      email: orden.cliente.email,
+      telefono: orden.cliente.telefono
+    } : null,
     eventos
   });
 });
@@ -901,11 +955,11 @@ app.get('/api/admin/pedidos', (req, res) => {
 
 /**
  * PATCH /api/admin/pedidos/:referencia/estado
- * Transición de estado de la orden
+ * Transición de estado de la orden y registro logístico de despacho
  */
 app.patch('/api/admin/pedidos/:referencia/estado', (req, res) => {
   const { referencia } = req.params;
-  const { nuevoEstado } = req.body;
+  const { nuevoEstado, transportadora, numeroGuia, notasDespacho } = req.body;
 
   const estadosValidos = ['pendiente_pago', 'en_preparacion', 'despachado', 'entregado', 'cancelado', 'rechazado'];
 
@@ -927,7 +981,19 @@ app.patch('/api/admin/pedidos/:referencia/estado', (req, res) => {
   orden.estado = nuevoEstado;
   orden.actualizadoEn = new Date().toISOString();
 
-  console.log(`📦 [OMS] Pedido ${referencia} cambiado a estado: ${nuevoEstado}`);
+  // Si cambia a despachado, registrar obligatoriamente datos logísticos
+  if (nuevoEstado === 'despachado') {
+    orden.transportadora = transportadora || orden.transportadora || 'Coordinadora';
+    orden.numeroGuia = numeroGuia || orden.numeroGuia || `CRD-${Date.now().toString().slice(-6)}`;
+    orden.fechaDespacho = new Date().toISOString();
+    if (notasDespacho !== undefined) orden.notasDespacho = notasDespacho;
+  } else {
+    if (transportadora !== undefined) orden.transportadora = transportadora;
+    if (numeroGuia !== undefined) orden.numeroGuia = numeroGuia;
+    if (notasDespacho !== undefined) orden.notasDespacho = notasDespacho;
+  }
+
+  console.log(`📦 [OMS] Pedido ${referencia} cambiado a estado: ${nuevoEstado} (Transportadora: ${orden.transportadora || 'N/A'}, Guía: ${orden.numeroGuia || 'N/A'})`);
 
   return res.json({
     success: true,
@@ -1066,11 +1132,11 @@ app.get('/api/admin/inventario/alertas', (req, res) => {
 
 /**
  * PATCH /api/admin/productos/:id/reabastecer
- * Permite al administrador sumar unidades en lote al stock de bodega
+ * Permite al administrador sumar unidades en lote al stock de bodega y registra movimiento en Kardex
  */
 app.patch('/api/admin/productos/:id/reabastecer', (req, res) => {
   const id = Number(req.params.id);
-  const { cantidad } = req.body;
+  const { cantidad, motivo } = req.body;
 
   const unidades = Number(cantidad);
   if (isNaN(unidades) || unidades <= 0) {
@@ -1091,12 +1157,36 @@ app.patch('/api/admin/productos/:id/reabastecer', (req, res) => {
   const anterior = productos[index].stock;
   productos[index].stock = anterior + unidades;
 
-  console.log(`📈 [INVENTARIO] Reabastecido ID ${id} (${productos[index].nombre}): ${anterior} -> ${productos[index].stock} (+${unidades})`);
+  const movimiento = {
+    id: Date.now(),
+    productoId: id,
+    productoNombre: productos[index].nombre,
+    tipo: 'ENTRADA',
+    cantidad: unidades,
+    motivo: motivo || 'Reabastecimiento de bodega central',
+    fecha: new Date().toISOString()
+  };
+  movimientosInventario.unshift(movimiento);
+
+  console.log(`📈 [INVENTARIO/KARDEX] Reabastecido ID ${id} (${productos[index].nombre}): ${anterior} -> ${productos[index].stock} (+${unidades}) | Motivo: ${movimiento.motivo}`);
 
   return res.json({
     success: true,
     message: `Se sumaron ${unidades} unidades al inventario de "${productos[index].nombre}". Nuevo stock: ${productos[index].stock}.`,
-    producto: productos[index]
+    producto: productos[index],
+    movimiento
+  });
+});
+
+/**
+ * GET /api/admin/inventario/kardex
+ * Retorna el historial de movimientos de entrada, salida y ajustes de bodega
+ */
+app.get('/api/admin/inventario/kardex', (req, res) => {
+  return res.json({
+    success: true,
+    total: movimientosInventario.length,
+    movimientos: movimientosInventario
   });
 });
 
@@ -1393,8 +1483,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Iniciar servidor Express en el puerto 5000 (solo si se ejecuta directamente)
-if (process.env.NODE_ENV !== 'test') {
+// Iniciar servidor Express en el puerto 5000 (solo si se ejecuta directamente y no en pruebas)
+const isDirectRun = process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].endsWith('start-server.js')) && !process.argv[1].includes('test');
+if (isDirectRun && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log('\n=============================================================');
     console.log('🚀 FERREWEB - SERVIDOR BACKEND API REST ACTIVO (PUERTO ' + PORT + ')');

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, 
   Menu, 
@@ -10,14 +10,26 @@ import {
   ShieldCheck, 
   User, 
   LogOut, 
-  Settings,
-  Shield
+  Shield,
+  Search,
+  Truck,
+  Building2,
+  PhoneCall,
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
+import RastreoModal from './RastreoModal';
+import CotizacionModal from './CotizacionModal';
 
 /**
  * Componente Navbar: Barra de navegación principal de FERREWEB.
- * Permite la navegación entre secciones (Inicio, Catálogo, Admin),
- * muestra el estado del carrito, autenticación de usuario y roles.
+ * Incluye:
+ * - Buscador central integrado con borde neón y placeholder industrial
+ * - Enlaces directos: Inicio, Catálogo, Rastrear Pedido, Cotizaciones B2B
+ * - Botón de contacto rápido directo por WhatsApp para compras de obra
+ * - Autenticación de clientes y administradores con roles
+ * - Carrito de compras con badge dinámico
+ * - Menú responsive completo para dispositivos móviles
  */
 export default function Navbar({ 
   cartCount = 0, 
@@ -28,7 +40,12 @@ export default function Navbar({
   onLogout 
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRastreoModalOpen, setIsRastreoModalOpen] = useState(false);
+  const [isCotizacionModalOpen, setIsCotizacionModalOpen] = useState(false);
+
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Comprobar si una ruta está activa
   const isActive = (path) => location.pathname === path;
@@ -41,6 +58,14 @@ export default function Navbar({
     setIsMobileMenuOpen(false);
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/catalogo?q=${encodeURIComponent(searchQuery.trim())}`);
+      closeMobileMenu();
+    }
+  };
+
   const esAdmin = currentUser && currentUser.rol === 'admin';
 
   return (
@@ -50,7 +75,7 @@ export default function Navbar({
         <div className="ticker-track">
           <div className="ticker-item">
             <span className="ticker-dot"></span>
-            <strong>⚡ DESPACHO PRIORITARIO:</strong> Envíos a toda Colombia en 24-48 horas
+            <strong>⚡ DESPACHO PRIORITARIO:</strong> Envíos a toda Colombia en 24-48 horas directamente a obra
           </div>
           <div className="ticker-item">
             <span className="ticker-dot"></span>
@@ -59,6 +84,10 @@ export default function Navbar({
           <div className="ticker-item">
             <span className="ticker-dot"></span>
             <strong>🛠️ GARANTÍA OFICIAL FERREWEB:</strong> Suministros certificados de calidad industrial
+          </div>
+          <div className="ticker-item">
+            <span className="ticker-dot"></span>
+            <strong>🏗️ ATENCIÓN A CONSTRUCTORAS:</strong> Precios especiales por mayor y cotizaciones B2B
           </div>
           <div className="ticker-item">
             <span className="ticker-dot"></span>
@@ -79,7 +108,7 @@ export default function Navbar({
       {/* Header y Navegación Principal */}
       <header className="navbar-header">
         <div className="container navbar-inner">
-          {/* Logotipo de FERREWEB */}
+          {/* 1. Logotipo de FERREWEB */}
           <Link to="/" className="brand-logo" onClick={closeMobileMenu} aria-label="FERREWEB - Ir al inicio">
             <div className="brand-icon">
               <Wrench size={22} strokeWidth={2.5} />
@@ -89,17 +118,27 @@ export default function Navbar({
             </div>
           </Link>
 
-          {/* Enlaces de Navegación de Escritorio */}
-          <nav aria-label="Navegación principal">
+          {/* 2. Buscador Central Integrado */}
+          <form className="navbar-search-form hide-mobile" onSubmit={handleSearchSubmit}>
+            <Search size={17} className="navbar-search-icon" />
+            <input
+              type="text"
+              className="navbar-search-input"
+              placeholder="Buscar taladros, cemento, tuberías, pintura..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Buscar en catálogo"
+            />
+            {searchQuery.trim() && (
+              <button type="submit" className="navbar-search-submit" title="Buscar">
+                <ArrowRight size={14} />
+              </button>
+            )}
+          </form>
+
+          {/* 3. Enlaces de Navegación de Escritorio */}
+          <nav aria-label="Navegación principal" className="hide-tablet">
             <ul className="nav-links-desktop">
-              <li>
-                <Link
-                  to="/"
-                  className={`nav-link ${isActive('/') ? 'active' : ''}`}
-                >
-                  Inicio
-                </Link>
-              </li>
               <li>
                 <Link
                   to="/catalogo"
@@ -107,6 +146,28 @@ export default function Navbar({
                 >
                   Catálogo
                 </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setIsRastreoModalOpen(true)}
+                  className="nav-link-btn"
+                  title="Consultar estado de envío"
+                >
+                  <Truck size={15} color="var(--color-secondary)" />
+                  <span>Rastrear Pedido</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setIsCotizacionModalOpen(true)}
+                  className="nav-link-btn"
+                  title="Cotización por volumen para constructoras"
+                >
+                  <Building2 size={15} color="var(--color-accent)" />
+                  <span>Cotizaciones B2B</span>
+                </button>
               </li>
               {esAdmin && (
                 <li>
@@ -123,8 +184,20 @@ export default function Navbar({
             </ul>
           </nav>
 
-          {/* Acciones del Header: Usuario, Carrito y Menú Móvil */}
-          <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* 4. Acciones del Header: Contacto WhatsApp, Usuario, Carrito y Móvil */}
+          <div className="nav-actions">
+            {/* Botón de Contacto Rápido para Compras de Obra */}
+            <a
+              href="https://wa.me/573001234567?text=Hola%20FerreWeb,%20necesito%20cotizar%20y%20comprar%20materiales%20para%20obra"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-quick-contact hide-mobile"
+              title="Contacto directo por WhatsApp para suministros de obra"
+            >
+              <PhoneCall size={14} />
+              <span>Compras Obra</span>
+            </a>
+
             {/* Gestión de Usuario */}
             {currentUser ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -141,7 +214,7 @@ export default function Navbar({
                   }}
                 >
                   {esAdmin ? <Shield size={15} color="var(--color-accent)" /> : <User size={15} color="var(--color-secondary)" />}
-                  <span style={{ fontWeight: '600', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontWeight: '600', maxWidth: '95px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {currentUser.nombre.split(' ')[0]}
                   </span>
                   <span
@@ -181,7 +254,7 @@ export default function Navbar({
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {/* Botón Acceso Clientes (Login y Registro) */}
+                {/* Botón Acceso Clientes */}
                 <button
                   type="button"
                   onClick={onOpenClientModal}
@@ -199,12 +272,13 @@ export default function Navbar({
                     gap: '6px'
                   }}
                   title="Ingreso y Registro de Clientes"
+                  className="hide-mobile"
                 >
                   <User size={15} />
                   <span>Clientes</span>
                 </button>
 
-                {/* Botón Acceso Exclusivo Administrador */}
+                {/* Botón Acceso Administrador */}
                 <button
                   type="button"
                   onClick={onOpenAdminModal}
@@ -212,18 +286,19 @@ export default function Navbar({
                     background: 'rgba(250, 204, 21, 0.1)',
                     border: '1px solid var(--color-accent)',
                     color: 'var(--color-accent)',
-                    padding: '6px 12px',
+                    padding: '6px 10px',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     fontWeight: '600',
                     fontSize: '0.82rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '4px'
                   }}
                   title="Acceso Exclusivo Administrador"
+                  className="hide-mobile"
                 >
-                  <Shield size={15} />
+                  <Shield size={14} />
                   <span>Admin</span>
                 </button>
               </div>
@@ -237,7 +312,7 @@ export default function Navbar({
               aria-label="Abrir carrito de compras"
             >
               <ShoppingCart size={19} />
-              <span>Carrito</span>
+              <span className="hide-mobile">Carrito</span>
               <span className="cart-badge" aria-live="polite">
                 {cartCount}
               </span>
@@ -259,6 +334,26 @@ export default function Navbar({
         {/* Menú Desplegable en Móvil */}
         {isMobileMenuOpen && (
           <div className="mobile-nav-panel">
+            {/* Buscador móvil */}
+            <form onSubmit={handleSearchSubmit} style={{ position: 'relative', marginBottom: '8px' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)' }} />
+              <input
+                type="text"
+                placeholder="Buscar taladros, cemento, tuberías..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 38px',
+                  backgroundColor: '#07261B',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '0.85rem'
+                }}
+              />
+            </form>
+
             <Link
               to="/"
               className={`nav-link ${isActive('/') ? 'active' : ''}`}
@@ -275,6 +370,54 @@ export default function Navbar({
               <Package size={18} style={{ display: 'inline', marginRight: '8px' }} />
               Catálogo de Productos
             </Link>
+            <button
+              type="button"
+              className="nav-link-btn"
+              onClick={() => {
+                closeMobileMenu();
+                setIsRastreoModalOpen(true);
+              }}
+              style={{ fontSize: '0.95rem', padding: '6px 0', textAlign: 'left', width: '100%' }}
+            >
+              <Truck size={18} color="var(--color-secondary)" style={{ display: 'inline', marginRight: '8px' }} />
+              Rastrear Pedido / Despacho
+            </button>
+            <button
+              type="button"
+              className="nav-link-btn"
+              onClick={() => {
+                closeMobileMenu();
+                setIsCotizacionModalOpen(true);
+              }}
+              style={{ fontSize: '0.95rem', padding: '6px 0', textAlign: 'left', width: '100%' }}
+            >
+              <Building2 size={18} color="var(--color-accent)" style={{ display: 'inline', marginRight: '8px' }} />
+              Cotizaciones B2B para Obra
+            </button>
+
+            {/* Enlace WhatsApp directo para compras de obra en móvil */}
+            <a
+              href="https://wa.me/573001234567?text=Hola%20FerreWeb,%20necesito%20cotizar%20materiales%20para%20obra"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(185, 231, 105, 0.12)',
+                border: '1px solid var(--color-secondary)',
+                color: 'var(--color-secondary)',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontWeight: '700',
+                fontSize: '0.9rem',
+                marginTop: '4px'
+              }}
+            >
+              <PhoneCall size={18} />
+              <span>Compras de Obra (WhatsApp Directo)</span>
+            </a>
+
             {esAdmin && (
               <Link
                 to="/admin"
@@ -328,6 +471,17 @@ export default function Navbar({
           </div>
         )}
       </header>
+
+      {/* Modales de Rastreo y Cotizaciones B2B */}
+      <RastreoModal
+        isOpen={isRastreoModalOpen}
+        onClose={() => setIsRastreoModalOpen(false)}
+      />
+
+      <CotizacionModal
+        isOpen={isCotizacionModalOpen}
+        onClose={() => setIsCotizacionModalOpen(false)}
+      />
     </>
   );
 }

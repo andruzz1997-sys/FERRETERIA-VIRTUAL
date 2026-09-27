@@ -28,12 +28,13 @@ import { obtenerProductos } from '../services/api';
 export default function Catalogo({ onAddToCart }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoriaParam = searchParams.get('categoria') || '';
+  const qParam = searchParams.get('q') || '';
 
   // Lista de productos dinámica desde el backend
   const [listaProductos, setListaProductos] = useState(defaultProductos);
 
   // Estados locales para filtrado y búsqueda
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(qParam);
   const [selectedCategory, setSelectedCategory] = useState(categoriaParam);
   const [sortBy, setSortBy] = useState('relevance');
 
@@ -61,6 +62,13 @@ export default function Catalogo({ onAddToCart }) {
       setSelectedCategory('');
     }
   }, [categoriaParam]);
+
+  // Sincronizar parámetro de búsqueda q desde la URL (Navbar o enlaces externos)
+  useEffect(() => {
+    if (qParam) {
+      setSearchTerm(qParam);
+    }
+  }, [qParam]);
 
   // Manejar cambio de chip de categoría
   const handleCategoryChange = (catId) => {

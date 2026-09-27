@@ -1386,3 +1386,806 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   color: #fff;
 }
+
+/* ==========================================================================
+   ACTUALIZACIÓN VISUAL INDUSTRIAL DE ALTO NIVEL (UI/UX MASTER PROMPT)
+   ========================================================================== */
+
+/* 1. Navbar Search & Quick Actions */
+.navbar-search-form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 420px;
+  margin: 0 16px;
+}
+
+.navbar-search-input {
+  width: 100%;
+  background: #07261B;
+  border: 1px solid rgba(255, 212, 59, 0.35);
+  border-radius: 24px;
+  padding: 8px 36px 8px 38px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: all var(--transition-normal);
+}
+
+.navbar-search-input:focus {
+  outline: none;
+  background: #0D3023;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 15px rgba(255, 212, 59, 0.35);
+}
+
+.navbar-search-input::placeholder {
+  color: var(--color-text-dim);
+  font-size: 0.8rem;
+}
+
+.navbar-search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--color-accent);
+  pointer-events: none;
+}
+
+.navbar-search-submit {
+  position: absolute;
+  right: 6px;
+  background: rgba(255, 212, 59, 0.15);
+  border: none;
+  color: var(--color-accent);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.navbar-search-submit:hover {
+  background: var(--color-accent);
+  color: #17251B;
+}
+
+.nav-link-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  transition: var(--transition-fast);
+}
+
+.nav-link-btn:hover {
+  color: var(--color-accent);
+}
+
+.btn-quick-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(185, 231, 105, 0.1);
+  border: 1px solid var(--color-secondary);
+  border-radius: 8px;
+  color: var(--color-secondary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-quick-contact:hover {
+  background: var(--color-secondary);
+  color: #17251B;
+  box-shadow: var(--shadow-neon-green);
+  transform: translateY(-2px);
+}
+
+/* 2. Hero Enhanced Benefit Cards (Truck, ShieldCheck, Clock, Percent) */
+.hero-benefits-grid {
+  padding: 16px 20px;
+  background: #0D3023;
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.hero-benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(2, 27, 18, 0.65);
+  border: 1px solid var(--color-border);
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: all var(--transition-fast);
+}
+
+.hero-benefit-item:hover {
+  border-color: var(--color-secondary);
+  background: rgba(7, 38, 27, 0.9);
+}
+
+.hero-benefit-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hero-benefit-icon.yellow {
+  background: rgba(255, 212, 59, 0.15);
+  color: var(--color-accent);
+  border: 1px solid rgba(255, 212, 59, 0.3);
+}
+
+.hero-benefit-icon.lime {
+  background: rgba(185, 231, 105, 0.15);
+  color: var(--color-secondary);
+  border: 1px solid rgba(185, 231, 105, 0.3);
+}
+
+.hero-benefit-item h4 {
+  font-size: 0.84rem;
+  color: #fff;
+  margin-bottom: 2px;
+  font-weight: 700;
+}
+
+.hero-benefit-item p {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* 3. Franja de Marcas Aliadas (Brand Trust) */
+.brand-trust-section {
+  padding: 30px 0 40px;
+  background: linear-gradient(180deg, rgba(2, 27, 18, 0.9) 0%, rgba(7, 38, 27, 0.6) 100%);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brand-trust-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.brand-trust-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(185, 231, 105, 0.2), transparent);
+}
+
+.brand-trust-title {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.brand-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.brand-trust-card {
+  background: rgba(7, 38, 27, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.25s ease;
+  cursor: default;
+}
+
+.brand-trust-card:hover {
+  background: rgba(13, 48, 35, 0.95);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 16px rgba(255, 212, 59, 0.35);
+  transform: translateY(-3px);
+}
+
+.brand-name-text {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #fff;
+  transition: color 0.2s ease;
+}
+
+.brand-trust-card:hover .brand-name-text {
+  color: var(--color-accent);
+  text-shadow: 0 0 10px rgba(255, 212, 59, 0.5);
+}
+
+.brand-tag-text {
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* 4. Categorías Glassmorphism Rediseñadas */
+.categories-enhanced-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.category-card-enhanced {
+  background: linear-gradient(135deg, rgba(7, 38, 27, 0.8) 0%, rgba(13, 48, 35, 0.6) 100%);
+  border: 1px solid rgba(185, 231, 105, 0.18);
+  backdrop-filter: blur(12px);
+  border-radius: var(--border-radius-md);
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-card-enhanced::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.category-card-enhanced:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 212, 59, 0.25);
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, rgba(13, 48, 35, 0.9) 0%, rgba(7, 38, 27, 0.8) 100%);
+}
+
+.category-card-enhanced:hover::after {
+  opacity: 1;
+}
+
+.category-icon-box-yellow {
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  background: #FFD43B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 15px rgba(255, 212, 59, 0.35);
+  transition: transform 0.3s ease;
+}
+
+.category-card-enhanced:hover .category-icon-box-yellow {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.category-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.category-title-bold {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+.category-explore-link {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: gap 0.2s ease;
+}
+
+.category-card-enhanced:hover .category-explore-link {
+  color: var(--color-accent);
+  gap: 10px;
+}
+
+/* 5. Módulo de Rastreo de Pedido Directo en Pantalla */
+.live-tracking-section {
+  padding: 70px 0;
+  background: radial-gradient(circle at 50% 50%, rgba(13, 48, 35, 0.5) 0%, rgba(2, 27, 18, 0.95) 100%);
+}
+
+.live-tracking-container {
+  max-width: 780px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #07261B 0%, #021B12 100%);
+  border: 1px solid rgba(185, 231, 105, 0.25);
+  backdrop-filter: blur(14px);
+  border-radius: var(--border-radius-lg);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(7, 38, 27, 0.8);
+}
+
+.live-tracking-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.live-tracking-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.live-tracking-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.live-tracking-input {
+  width: 100%;
+  padding: 14px 16px 14px 44px;
+  background: #021B12;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+}
+
+.live-tracking-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 15px rgba(255, 212, 59, 0.25);
+}
+
+.input-search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-accent);
+}
+
+.live-tracking-quick-test {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.quick-ref-btn {
+  color: var(--color-secondary);
+  background: rgba(185, 231, 105, 0.08);
+  border: 1px solid rgba(185, 231, 105, 0.2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-ref-btn:hover {
+  background: var(--color-secondary);
+  color: #17251B;
+}
+
+.tracking-error-box {
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid var(--color-danger);
+  border-radius: 8px;
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tracking-result-card {
+  background: rgba(2, 27, 18, 0.8);
+  border: 1px solid rgba(185, 231, 105, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+  animation: slide-up 300ms ease;
+}
+
+.tracking-result-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tracking-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  display: block;
+}
+
+.tracking-ref-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #fff;
+  font-family: var(--font-mono);
+  margin: 0;
+}
+
+.tracking-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(185, 231, 105, 0.12);
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  border-radius: 20px;
+}
+
+.tracking-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.meta-col-label {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--color-text-dim);
+  margin-bottom: 4px;
+}
+
+.meta-col-value {
+  font-size: 0.92rem;
+  color: #fff;
+}
+
+.highlight-lime {
+  color: var(--color-secondary) !important;
+}
+
+.highlight-yellow {
+  color: var(--color-accent) !important;
+}
+
+/* 6. Banner para Contratistas y Maestros de Obra (B2B) */
+.b2b-contractor-section {
+  padding: 50px 0;
+}
+
+.b2b-contractor-card {
+  background: linear-gradient(135deg, #07261B 0%, #0D3023 100%);
+  border: 1px solid rgba(255, 212, 59, 0.35);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(255, 212, 59, 0.15);
+  border-radius: var(--border-radius-lg);
+  padding: 44px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.b2b-contractor-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 212, 59, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.b2b-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 212, 59, 0.12);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  border-radius: 30px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+}
+
+.b2b-title {
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  margin-bottom: 16px;
+  max-width: 800px;
+}
+
+.b2b-description {
+  font-size: 1.05rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  margin-bottom: 24px;
+  max-width: 820px;
+}
+
+.b2b-benefits-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.b2b-benefit-point {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.b2b-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+/* Responsividad Adicional */
+@media (max-width: 992px) {
+  .hide-tablet {
+    display: none !important;
+  }
+  .navbar-search-form {
+    max-width: 280px;
+  }
+  .hero-benefits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  .b2b-contractor-card {
+    padding: 28px 20px;
+  }
+  .live-tracking-container {
+    padding: 24px 18px;
+  }
+  .live-tracking-form {
+    flex-direction: column;
+  }
+  .live-tracking-form .btn {
+    width: 100%;
+  }
+  .categories-enhanced-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   ESTILOS DE REMISIÓN DE DESPACHO E IMPRESIÓN (BODEGA FERREWEB)
+   ========================================================================== */
+.remision-container {
+  background: #ffffff;
+  color: #111827;
+  padding: 32px;
+  border-radius: 8px;
+  max-width: 820px;
+  margin: 0 auto;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.remision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #1F5A37;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.remision-company-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1F5A37;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.remision-company-info {
+  font-size: 11px;
+  color: #4B5563;
+  line-height: 1.4;
+}
+
+.remision-doc-title {
+  text-align: right;
+}
+
+.remision-badge {
+  background: #1F5A37;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 13px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.remision-ref {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.remision-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  background: #F3F4F6;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #E5E7EB;
+  color: #1F2937;
+}
+
+.remision-meta-block h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #1F5A37;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.remision-meta-block p {
+  margin: 2px 0;
+  font-size: 12px;
+}
+
+.remision-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+
+.remision-table th {
+  background: #1F5A37;
+  color: #ffffff;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.remision-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #E5E7EB;
+  color: #1F2937;
+}
+
+.remision-table tr:nth-child(even) td {
+  background: #F9FAFB;
+}
+
+.remision-total-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  padding: 12px 16px;
+  background: #F3F4F6;
+  border-radius: 6px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: #1F2937;
+}
+
+.remision-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 36px;
+  padding-top: 20px;
+}
+
+.remision-signature-box {
+  border-top: 1px dashed #4B5563;
+  padding-top: 8px;
+  font-size: 11px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Reglas de Impresión */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .remision-print-container,
+  .remision-print-container * {
+    visibility: visible !important;
+  }
+
+  .remision-print-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
