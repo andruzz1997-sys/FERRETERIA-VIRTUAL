@@ -1,14 +1,29 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, ArrowUpDown, PackageX } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { 
+  Search, 
+  Filter, 
+  ArrowUpDown, 
+  PackageX, 
+  LayoutGrid, 
+  List, 
+  ShoppingCart, 
+  Plus, 
+  Minus,
+  Check,
+  Star
+} from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { productos as defaultProductos, categorias } from '../data/productos';
+import { productos as defaultProductos, categorias, formatearPrecioCOP } from '../data/productos';
 import { obtenerProductos } from '../services/api';
 
 /**
  * Página de Catálogo de Productos de FERREWEB.
- * Permite explorar, filtrar por categorías, buscar en tiempo real
- * y ordenar el inventario completo consumido desde la API REST.
+ * Permite explorar, filtrar por categorías, buscar en tiempo real, ordenar
+ * y alternar entre:
+ * - Modo Malla de Tarjetas (consumo visual masivo)
+ * - Modo Lista Compacta / Tabla Industrial (ideal para compras mayoristas)
+ * Evidencia: SENA GA7-220501096-AA5-EV03
  */
 export default function Catalogo({ onAddToCart }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,6 +36,13 @@ export default function Catalogo({ onAddToCart }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categoriaParam);
   const [sortBy, setSortBy] = useState('relevance');
+
+  // Modo de vista: 'grid' (Malla de tarjetas) | 'table' (Tabla Industrial)
+  const [viewMode, setViewMode] = useState('grid');
+
+  // Cantidades temporales para compra rápida en modo tabla
+  const [cantidadesTabla, setCantidadesTabla] = useState({});
+  const [agregadosRecientes, setAgregadosRecientes] = useState({});
 
   // Cargar productos del backend
   useEffect(() => {
@@ -84,17 +106,39 @@ export default function Catalogo({ onAddToCart }) {
     }
 
     return result;
-  }, [searchTerm, selectedCategory, sortBy]);
+  }, [listaProductos, searchTerm, selectedCategory, sortBy]);
+
+  // Manejadores para la tabla rápida mayorista
+  const handleCambiarCantidadTabla = (id, delta, maxStock) => {
+    setCantidadesTabla((prev) => {
+      const actual = prev[id] || 1;
+      const nueva = Math.min(Math.max(1, actual + delta), maxStock);
+      return { ...prev, [id]: nueva };
+    });
+  };
+
+  const handleAgregarDesdeTabla = (producto) => {
+    const cant = cantidadesTabla[producto.id] || 1;
+    if (onAddToCart) {
+      for (let i = 0; i < cant; i++) {
+        onAddToCart(producto);
+      }
+      setAgregadosRecientes((prev) => ({ ...prev, [producto.id]: true }));
+      setTimeout(() => {
+        setAgregadosRecientes((prev) => ({ ...prev, [producto.id]: false }));
+      }, 1500);
+    }
+  };
 
   return (
     <div className="catalog-page">
       <div className="container">
         {/* Encabezado del Catálogo */}
-        <div className="section-header" style={{ textAlign: 'left', marginBottom: '30px' }}>
+        <div className="section-header" style={{ textAlign: 'left', marginBottom: '24px' }}>
           <span className="section-tag">Inventario en Vivo</span>
           <h1 className="section-title">Catálogo Oficial de Productos</h1>
           <p className="section-subtitle" style={{ margin: '0' }}>
-            Explora nuestra gama de herramientas, materiales de construcción, tuberías, electricidad, pintura y seguridad industrial.
+            Explora nuestra gama de herramientas, materiales de construcción, tuberías, electricidad, pintura y seguridad industrial con precios transparentes en pesos colombianos (COP).
           </p>
         </div>
 
@@ -107,7 +151,7 @@ export default function Catalogo({ onAddToCart }) {
               <input
                 type="text"
                 className="search-input"
-                placeholder="Buscar por nombre, especificación o tag (ej: taladro, PVC, cemento)..."
+                placeholder="Buscar por nombre, SKU o tag (ej: taladro, PVC, cemento)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 aria-label="Buscar producto"
@@ -152,25 +196,44 @@ export default function Catalogo({ onAddToCart }) {
           </div>
         </div>
 
-        {/* Contador de Resultados */}
-        <div className="catalog-results-count">
-          Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{listaProductos.length}</strong> productos disponibles
-          {selectedCategory && <span> en la categoría <em>"{selectedCategory}"</em></span>}
-          {searchTerm && <span> para la búsqueda <em>"{searchTerm}"</em></span>}
+        {/* Barra de Resultados y Conmutador de Vista */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          <div className="catalog-results-count" style={{ margin: 0 }}>
+            Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{listaProductos.length}</strong> productos disponibles
+            {selectedCategory && <span> en la categoría <em>"{selectedCategory}"</em></span>}
+            {searchTerm && <span> para <em>"{searchTerm}"</em></span>}
+          </div>
+
+          {/* Selector de Vista: Malla vs Tabla Industrial */}
+          <div className="view-mode-selector">
+            <button
+              type="button"
+              className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Vista en Malla de Tarjetas"
+            >
+              <LayoutGrid size={16} /> Malla
+            </button>
+            <button
+              type="button"
+              className={`view-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
+              onClick={() => setViewMode('table')}
+              title="Vista Lista Compacta / Tabla Industrial (Mayoristas)"
+            >
+              <List size={16} /> Tabla Industrial
+            </button>
+          </div>
         </div>
 
-        {/* Grid de Productos o Estado Vacío */}
-        {productosFiltrados.length > 0 ? (
-          <div className="catalog-grid">
-            {productosFiltrados.map((producto) => (
-              <ProductCard
-                key={producto.id}
-                producto={producto}
-                onAddToCart={onAddToCart}
-              />
-            ))}
-          </div>
-        ) : (
+        {/* Renderizado Condicional: VISTA MALLA vs VISTA TABLA INDUSTRIAL */}
+        {productosFiltrados.length === 0 ? (
           <div className="catalog-empty">
             <PackageX size={48} color="var(--color-accent)" style={{ marginBottom: '16px' }} />
             <h3>No se encontraron productos</h3>
@@ -186,6 +249,145 @@ export default function Catalogo({ onAddToCart }) {
             >
               Limpiar Filtros de Búsqueda
             </button>
+          </div>
+        ) : viewMode === 'grid' ? (
+          /* 1. MODO MALLA DE TARJETAS */
+          <div className="catalog-grid">
+            {productosFiltrados.map((producto) => (
+              <ProductCard
+                key={producto.id}
+                producto={producto}
+                onAddToCart={onAddToCart}
+              />
+            ))}
+          </div>
+        ) : (
+          /* 2. MODO LISTA COMPACTA / TABLA INDUSTRIAL (Compras por Mayor) */
+          <div style={{ overflowX: 'auto' }}>
+            <table className="industrial-catalog-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '90px' }}>SKU</th>
+                  <th>Artículo / Suministro</th>
+                  <th>Categoría</th>
+                  <th>Existencias</th>
+                  <th>Precio Unitario (COP)</th>
+                  <th style={{ textAlign: 'center' }}>Compra Rápida</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productosFiltrados.map((producto) => {
+                  const cantActual = cantidadesTabla[producto.id] || 1;
+                  const yaAgregado = agregadosRecientes[producto.id];
+
+                  return (
+                    <tr key={producto.id}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                        FW-{String(producto.id).padStart(4, '0')}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <img
+                            src={producto.imagen}
+                            alt={producto.nombre}
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px' }}
+                          />
+                          <div>
+                            <Link
+                              to={`/producto/${producto.id}`}
+                              style={{ fontWeight: '700', fontSize: '0.92rem', color: '#fff', textDecoration: 'none' }}
+                            >
+                              {producto.nombre}
+                            </Link>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                              <Star size={13} fill="var(--color-accent)" color="var(--color-accent)" />
+                              <span>{producto.rating.toFixed(1)}</span>
+                              {producto.enOferta && (
+                                <span style={{ color: 'var(--color-secondary)', marginLeft: '6px', fontWeight: '700' }}>
+                                  ⚡ -{producto.descuento}% OFF
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ fontSize: '0.82rem' }}>
+                        <span style={{ background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: '4px' }}>
+                          {producto.categoria}
+                        </span>
+                      </td>
+                      <td>
+                        {producto.stock <= 5 ? (
+                          <span style={{ color: 'var(--color-warning)', fontSize: '0.82rem', fontWeight: '700' }}>
+                            {producto.stock} uds (Crítico)
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--color-secondary)', fontSize: '0.82rem', fontWeight: '700' }}>
+                            {producto.stock} uds en bodega
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--color-accent)', fontSize: '0.95rem' }}>
+                        {formatearPrecioCOP(producto.precio)}
+                        {producto.precioAnterior && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textDecoration: 'line-through' }}>
+                            {formatearPrecioCOP(producto.precioAnterior)}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                          {/* Selector rápido de cantidad */}
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            background: '#021B12',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: '6px',
+                            padding: '2px 6px'
+                          }}>
+                            <button
+                              type="button"
+                              onClick={() => handleCambiarCantidadTabla(producto.id, -1, producto.stock)}
+                              style={{ color: 'var(--color-text-muted)', padding: '2px 4px' }}
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span style={{ minWidth: '24px', textAlign: 'center', fontSize: '0.82rem', fontWeight: '700' }}>
+                              {cantActual}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCambiarCantidadTabla(producto.id, 1, producto.stock)}
+                              style={{ color: 'var(--color-text-muted)', padding: '2px 4px' }}
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+
+                          {/* Botón rápido de agregar */}
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => handleAgregarDesdeTabla(producto)}
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '0.8rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {yaAgregado ? <Check size={14} /> : <ShoppingCart size={14} />}
+                            {yaAgregado ? '¡Listo!' : 'Agregar'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
